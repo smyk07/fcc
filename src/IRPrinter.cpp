@@ -78,6 +78,12 @@ void dump(fcc::Instruction &instr) {
     break;
   }
 
+  case OpCode::Add:
+  case OpCode::Sub:
+  case OpCode::Mul:
+  case OpCode::Div:
+    std::print(" %{} %{}", instr.operands[0]->id, instr.operands[1]->id);
+
   case OpCode::Ret:
     if (!instr.operands.empty())
       std::print(" %{}", instr.operands[0]->id);

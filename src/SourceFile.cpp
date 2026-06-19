@@ -71,7 +71,7 @@ static void dump_cursor(CXCursor cursor, int depth) {
   int next_depth = depth + 1;
   clang_visitChildren(
       cursor,
-      [](CXCursor child, CXCursor, CXClientData client_data) {
+      [](CXCursor child, CXCursor /* parent */, CXClientData client_data) {
         auto *current_depth = static_cast<int *>(client_data);
         dump_cursor(child, *current_depth);
         return CXChildVisit_Continue;

@@ -55,12 +55,11 @@ struct Type {
   std::uint64_t arr_len = 0;
 
   Type(TypeKind kind) : kind{kind} {}
-  Type(CXType ctype);
 };
 
 struct Value {
   std::uint64_t id;
-  std::unique_ptr<Type> type;
+  Type *type = nullptr;
 };
 
 struct ConstData {
@@ -107,7 +106,7 @@ struct BasicBlock {
 
 struct Function {
   std::string name;
-  std::unique_ptr<Type> ret_type;
+  Type *ret_type = nullptr;
   std::vector<std::unique_ptr<Value>> params;
   std::vector<std::unique_ptr<BasicBlock>> blcks;
 };
