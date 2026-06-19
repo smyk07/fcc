@@ -1,10 +1,12 @@
 #include "IR.hpp"
 
+#include <format>
+#include <inttypes.h>
 #include <print>
 
 namespace fcc {
 
-const char *opcode_to_string(OpCode op) {
+const std::string opcode_to_string(const OpCode op) {
   switch (op) {
   case OpCode::Const:
     return "const";
@@ -24,6 +26,42 @@ const char *opcode_to_string(OpCode op) {
     return "condbr";
   case OpCode::Phi:
     return "phi";
+  }
+}
+
+const std::string type_to_str(const Type &ty) {
+  switch (ty.kind) {
+  case TypeKind::I8:
+    return "i8";
+  case TypeKind::I16:
+    return "i16";
+  case TypeKind::I32:
+    return "i32";
+  case TypeKind::I64:
+    return "i64";
+
+  case TypeKind::U8:
+    return "u8";
+  case TypeKind::U16:
+    return "u16";
+  case TypeKind::U32:
+    return "u32";
+  case TypeKind::U64:
+    return "u64";
+
+  case TypeKind::F32:
+    return "f32";
+  case TypeKind::F64:
+    return "f64";
+
+  case TypeKind::Void:
+    return "void";
+  case TypeKind::Pointer:
+    return (std::string{"ptr "} + type_to_str(*ty.pointed_to));
+  case TypeKind::Array:
+    return std::format("%s[%" PRIu64 "]", type_to_str(*ty.arr_elem_type),
+                       ty.arr_len);
+    break;
   }
 }
 
@@ -53,14 +91,21 @@ void dump(fcc::Instruction &instr) {
 }
 
 void dump(fcc::BasicBlock &bb) {
-  std::println("bb {}:", bb.id);
+  std::println("bb_{}:", bb.id);
 
   for (auto &instr : bb.instrs)
     dump(*instr);
 }
 
 void dump(fcc::Function &fn) {
-  std::println("fn {} {{", fn.name);
+  std::print("fn {}(", fn.name);
+  for (auto &pv : fn.params) {
+    if (pv == fn.params.back())
+      std::print("{}", type_to_str(*pv->type));
+    else
+      std::print("{}, ", type_to_str(*pv->type));
+  }
+  std::println(") -> {} {{", type_to_str(*fn.ret_type));
 
   for (auto &bb : fn.blcks)
     dump(*bb);

@@ -107,6 +107,7 @@ struct BasicBlock {
 
 struct Function {
   std::string name;
+  std::unique_ptr<Type> ret_type;
   std::vector<std::unique_ptr<Value>> params;
   std::vector<std::unique_ptr<BasicBlock>> blcks;
 };

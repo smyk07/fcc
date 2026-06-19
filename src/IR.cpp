@@ -5,7 +5,6 @@
 
 #include <cassert>
 #include <format>
-#include <stdexcept>
 
 namespace fcc {
 
@@ -77,9 +76,8 @@ Type::Type(CXType cxtype) {
   }
 
   default:
-    throw std::runtime_error(
-        std::format("unsupported type {}",
-                    cxstring_to_string(clang_getTypeSpelling(cxtype))));
+    throw_error(std::format("unsupported type {}",
+                            cxstring_to_string(clang_getTypeSpelling(cxtype))));
     break;
   }
 }

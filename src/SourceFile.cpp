@@ -5,7 +5,6 @@
 
 #include <format>
 #include <print>
-#include <stdexcept>
 
 namespace fcc {
 
@@ -17,7 +16,7 @@ SourceFile::SourceFile(const char *filepath) {
 
   if (!tu) {
     clang_disposeIndex(index);
-    throw std::runtime_error(std::format("Failed to parse {}", filepath));
+    throw_error(std::format("Failed to parse {}", filepath));
   }
 
   bool has_errors = false;
@@ -44,7 +43,7 @@ SourceFile::SourceFile(const char *filepath) {
     clang_disposeTranslationUnit(tu);
     clang_disposeIndex(index);
 
-    throw std::runtime_error(std::format("Failed to parse {}", filepath));
+    throw_error(std::format("Failed to parse {}", filepath));
   }
 
   root = clang_getTranslationUnitCursor(tu);

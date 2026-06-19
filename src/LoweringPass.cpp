@@ -32,7 +32,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
   }
 
   default:
-    throw std::runtime_error("unsupported expression");
+    throw_error("unsupported expression");
   }
 }
 
@@ -78,7 +78,7 @@ void LoweringPass::lower_stmt(CXCursor stmt, Function *fn, BasicBlock *bb) {
   }
 
   default:
-    throw std::runtime_error("unsupported statement");
+    throw_error("unsupported statement");
   }
 }
 
@@ -87,6 +87,8 @@ void LoweringPass::lower_function(const CXCursor fn_decl, Module *mod) {
   auto *fn_ptr = fn.get();
 
   fn_ptr->name = cxstring_to_string(clang_getCursorSpelling(fn_decl));
+  fn_ptr->ret_type =
+      std::make_unique<Type>(clang_getResultType(clang_getCursorType(fn_decl)));
 
   CXCursor body_cursor = clang_getNullCursor();
 
