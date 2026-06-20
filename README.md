@@ -6,6 +6,12 @@ Build:
 make
 ```
 
+Run tests:
+
+```
+python tests.py
+```
+
 Cleanup:
 
 ```
@@ -23,3 +29,4 @@ Prerequisites:
 - make
 - clang
 - clang development libraries
+- python

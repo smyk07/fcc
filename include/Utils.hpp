@@ -8,6 +8,13 @@
 
 namespace fcc {
 
+#define FCC_DEBUG(stmt)                                                        \
+  do {                                                                         \
+    if (fcc::debug_enabled) {                                                  \
+      stmt;                                                                    \
+    }                                                                          \
+  } while (0)
+
 [[noreturn]]
 void throw_error(std::string msg,
                  std::source_location loc = std::source_location::current());

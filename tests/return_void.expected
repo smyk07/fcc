@@ -1,0 +1,4 @@
+fn nuffing() -> void {
+bb_0:
+ret
+}

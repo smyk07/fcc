@@ -1,6 +1,12 @@
 # Journal
 
+This is a learning project for me, for learning IR building and Optimization Passes.
+
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
+
+## 20/06/2026
+
+- Added basic testing infra
 
 ## 19/06/2026
 

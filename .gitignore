@@ -6,8 +6,13 @@
 !/include
 !/include/**
 
+!/tests
+!/tests/**
+
 !.gitignore
+
 !Makefile
+!tests.py
 
 !README.md
 !journal.md
