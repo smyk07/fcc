@@ -6,7 +6,7 @@
 
 namespace fcc {
 
-const std::string opcode_to_string(const OpCode op) {
+const char *opcode_to_string(const OpCode op) {
   switch (op) {
   case OpCode::Const:
     return "const";
@@ -29,7 +29,7 @@ const std::string opcode_to_string(const OpCode op) {
   }
 }
 
-const std::string type_to_str(const Type &ty) {
+std::string type_to_str(const Type &ty) {
   switch (ty.kind) {
   case TypeKind::I8:
     return "i8";
@@ -89,6 +89,23 @@ void dump(fcc::Instruction &instr) {
     if (!instr.operands.empty())
       std::print(" %{}", instr.operands[0]->id);
     break;
+
+  case OpCode::Phi: {
+    auto &data = std::get<PhiData>(instr.payload);
+
+    std::print(" ");
+
+    bool first = true;
+    for (auto &[bb, val] : data.incoming) {
+      if (!first)
+        std::print(", ");
+
+      std::print("[ bb_{}, %{} ]", bb->id, val->id);
+      first = false;
+    }
+
+    break;
+  }
 
   default:
     break;

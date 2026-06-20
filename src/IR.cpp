@@ -49,4 +49,31 @@ std::vector<BasicBlock *> BasicBlock::predecessors(Function *fn) const {
   return preds;
 }
 
+void Function::replace_all_uses(Value *oldv, Value *newv) {
+  for (auto &bb : blcks) {
+    for (auto &instr : bb->instrs) {
+      for (auto &val : instr->operands) {
+        if (val == oldv)
+          val = newv;
+      }
+
+      std::visit(
+          [&](auto &payload) {
+            using T = std::decay_t<decltype(payload)>;
+
+            if constexpr (std::is_same_v<T, PhiData>) {
+              for (auto &[block, val] : payload.incoming) {
+                if (val == oldv)
+                  val = newv;
+              }
+            } else if constexpr (std::is_same_v<T, CondBrData>) {
+              if (payload.cond == oldv)
+                payload.cond = newv;
+            }
+          },
+          instr->payload);
+    }
+  }
+}
+
 } // namespace fcc

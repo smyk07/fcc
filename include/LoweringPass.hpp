@@ -5,6 +5,16 @@
 #include <unordered_map>
 #include <vector>
 
+struct CursorHash {
+  size_t operator()(CXCursor c) const { return clang_hashCursor(c); }
+};
+
+struct CursorEq {
+  bool operator()(CXCursor a, CXCursor b) const {
+    return clang_equalCursors(a, b);
+  }
+};
+
 namespace fcc {
 
 struct TypeCtx {
@@ -21,10 +31,11 @@ public:
 };
 
 struct LoweringPass {
+private:
   const SourceFile &source;
 
 public:
-  explicit LoweringPass(const SourceFile &source) : source(source) {};
+  explicit LoweringPass(const SourceFile &source) : source{source} {};
 
   Module run();
 
@@ -32,15 +43,24 @@ private:
   std::uint64_t next_bb_id = 0;
   std::uint64_t next_value_id = 0;
 
+  std::unordered_map<
+      BasicBlock *, std::unordered_map<CXCursor, Value *, CursorHash, CursorEq>>
+      defs;
+
   static TypeCtx type_ctx;
 
   static Type *lower_type(CXType cxtype);
 
+  Instruction *create_phi(CXCursor var, BasicBlock *bb);
+  void seal_block(BasicBlock *bb);
+
+  void write_variable(CXCursor var, BasicBlock *bb, Value *val);
+  Value *read_variable(CXCursor var, BasicBlock *bb);
+  Value *read_variable_recursive(CXCursor var, BasicBlock *bb);
+
   Value *lower_expr(CXCursor expr, Function *fn, BasicBlock *bb);
-
   void lower_stmt(CXCursor stmt, Function *fn, BasicBlock *bb);
-
-  void lower_function(const CXCursor fn_decl, Module *mod);
+  void lower_function(CXCursor fn_decl, Module *mod);
 };
 
 } // namespace fcc

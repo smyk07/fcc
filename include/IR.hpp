@@ -100,6 +100,9 @@ struct BasicBlock {
 
   std::vector<std::unique_ptr<Instruction>> instrs;
 
+  bool sealed = false;
+  std::vector<std::pair<CXCursor, Instruction *>> incomplete_phis;
+
   std::vector<BasicBlock *> successors() const;
   std::vector<BasicBlock *> predecessors(Function *fn) const;
 };
@@ -109,6 +112,8 @@ struct Function {
   Type *ret_type = nullptr;
   std::vector<std::unique_ptr<Value>> params;
   std::vector<std::unique_ptr<BasicBlock>> blcks;
+
+  void replace_all_uses(Value *oldv, Value *newv);
 };
 
 struct Module {

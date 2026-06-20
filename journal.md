@@ -7,6 +7,12 @@ Hoping to keep daily Dev log like reports in this file. Days in decending order.
 ## 20/06/2026
 
 - Added basic testing infra
+- Added vardecl lowering
+- also added assignment lowering
+- also added a lot of helpers since i finally read the Braun et al. paper, im sure it will have some bugs tho
+
+> tomorrow i will hopefully lower comparison ops and if-elseif-else stmts
+> and addPhiOperands and tryRemoveTrivialPhi
 
 ## 19/06/2026
 
