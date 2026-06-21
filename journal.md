@@ -4,6 +4,12 @@ This is a learning project for me, for learning IR building and Optimization Pas
 
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
 
+## 21/06/2026
+
+- Lowered conditional oparators, also found out clang gives you these ParenExpr wrappers for (...) like expressions. lowered that too.
+- lowered ifstmt and found out how buggy my code was :sob:
+- also better printing of function params
+
 ## 20/06/2026
 
 - Added basic testing infra
