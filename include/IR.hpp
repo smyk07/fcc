@@ -110,7 +110,7 @@ struct Instruction : Value {
 
   Instruction(OpCode op) : op{op} { kind = ValueKind::Instr; }
 
-  Instruction(OpCode op, std::uint64_t id) : op{op} { Value::id = id; }
+  Instruction(OpCode op, std::uint64_t id) : Instruction(op) { Value::id = id; }
 };
 
 // fwd decl
