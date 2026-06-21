@@ -1,13 +1,21 @@
 #include "IR.hpp"
+#include "Utils.hpp"
 
+#include <algorithm>
 #include <clang-c/Index.h>
 
 #include <cassert>
 
 namespace fcc {
 
+bool is_terminator(OpCode op) {
+  return op == OpCode::Ret || op == OpCode::Jmp || op == OpCode::CondBr;
+}
+
 std::vector<BasicBlock *> BasicBlock::successors() const {
-  assert(!instrs.empty() && "BasicBlock has no instructions");
+  if (instrs.empty()) {
+    return {};
+  }
 
   auto *term = instrs.back().get();
 
@@ -25,10 +33,9 @@ std::vector<BasicBlock *> BasicBlock::successors() const {
   case OpCode::Ret:
     return {};
 
-  default: {
-    assert(false && "BasicBlock does not end in a terminator");
+  default:
+    throw_error("BasicBlock does not end in a terminator");
     return {};
-  }
   }
 }
 
@@ -72,6 +79,20 @@ void Function::replace_all_uses(Value *oldv, Value *newv) {
             }
           },
           instr->payload);
+    }
+  }
+}
+
+void Function::erase_instr(Instruction *dead) {
+  for (auto &bb : blcks) {
+    auto &instrs = bb->instrs;
+
+    auto it = std::find_if(instrs.begin(), instrs.end(),
+                           [&](auto &ptr) { return ptr.get() == dead; });
+
+    if (it != instrs.end()) {
+      instrs.erase(it);
+      break;
     }
   }
 }

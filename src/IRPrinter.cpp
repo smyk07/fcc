@@ -114,6 +114,20 @@ void dump(fcc::Instruction &instr) {
       std::print(" %{}", instr.operands[0]->id);
     break;
 
+  case OpCode::Jmp: {
+    auto &data = std::get<JmpData>(instr.payload);
+    std::print(" bb_{}", data.target->id);
+    break;
+  }
+
+  case OpCode::CondBr: {
+    auto &data = std::get<CondBrData>(instr.payload);
+
+    std::print(" %{} bb_{} bb_{}", data.cond->id, data.true_target->id,
+               data.false_target->id);
+    break;
+  }
+
   case OpCode::Phi: {
     auto &data = std::get<PhiData>(instr.payload);
 
@@ -130,9 +144,6 @@ void dump(fcc::Instruction &instr) {
 
     break;
   }
-
-  default:
-    break;
   }
 
   std::println();
@@ -149,9 +160,9 @@ void dump(fcc::Function &fn) {
   std::print("fn {}(", fn.name);
   for (auto &pv : fn.params) {
     if (pv == fn.params.back())
-      std::print("{}", type_kind_to_str(*pv->type));
+      std::print("%{}: {}", pv->id, type_kind_to_str(*pv->type));
     else
-      std::print("{}, ", type_kind_to_str(*pv->type));
+      std::print("%{}: {}, ", pv->id, type_kind_to_str(*pv->type));
   }
   std::println(") -> {} {{", type_kind_to_str(*fn.ret_type));
 

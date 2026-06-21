@@ -32,6 +32,8 @@ enum class OpCode {
   Phi,
 };
 
+bool is_terminator(OpCode op);
+
 enum class TypeKind {
   I8,
   I16,
@@ -121,6 +123,7 @@ struct Function {
   std::vector<std::unique_ptr<BasicBlock>> blcks;
 
   void replace_all_uses(Value *oldv, Value *newv);
+  void erase_instr(Instruction *dead);
 };
 
 struct Module {
