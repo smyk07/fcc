@@ -1,10 +1,10 @@
 fn num() -> i32 {
 bb_0:
-%0 = const 67
+%0: i32 = const 67
 ret %0
 }
 fn num2() -> i32 {
 bb_1:
-%1 = const 69
+%1: i32 = const 69
 ret %1
 }

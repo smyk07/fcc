@@ -1,20 +1,20 @@
 fn add_five(i32) -> i32 {
 bb_0:
-%0 = phi 
-%1 = const 5
-%2 = add %0 %1
+%0: i32 = phi 
+%1: i32 = const 5
+%2: i32 = add %0 %1
 ret %2
 }
 fn add_67(i32) -> i32 {
 bb_1:
-%3 = phi 
-%4 = const 67
-%5 = add %3 %4
+%3: i32 = phi 
+%4: i32 = const 67
+%5: i32 = add %3 %4
 ret %5
 }
 fn square(i32) -> i32 {
 bb_2:
-%6 = phi 
-%7 = mul %6 %6
+%6: i32 = phi 
+%7: i32 = mul %6 %6
 ret %7
 }

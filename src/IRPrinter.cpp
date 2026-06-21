@@ -10,6 +10,7 @@ const char *opcode_to_string(const OpCode op) {
   switch (op) {
   case OpCode::Const:
     return "const";
+
   case OpCode::Add:
     return "add";
   case OpCode::Sub:
@@ -18,18 +19,35 @@ const char *opcode_to_string(const OpCode op) {
     return "mul";
   case OpCode::Div:
     return "div";
+
+  case OpCode::Lt:
+    return "lt";
+  case OpCode::Le:
+    return "le";
+  case OpCode::Gt:
+    return "gt";
+  case OpCode::Ge:
+    return "ge";
+  case OpCode::Eq:
+    return "eq";
+  case OpCode::Ne:
+    return "ne";
+
   case OpCode::Ret:
     return "ret";
+
   case OpCode::Jmp:
     return "jmp";
+
   case OpCode::CondBr:
     return "condbr";
+
   case OpCode::Phi:
     return "phi";
   }
 }
 
-std::string type_to_str(const Type &ty) {
+std::string type_kind_to_str(const Type &ty) {
   switch (ty.kind) {
   case TypeKind::I8:
     return "i8";
@@ -57,9 +75,9 @@ std::string type_to_str(const Type &ty) {
   case TypeKind::Void:
     return "void";
   case TypeKind::Pointer:
-    return (std::string{"ptr "} + type_to_str(*ty.pointed_to));
+    return (std::string{"ptr "} + type_kind_to_str(*ty.pointed_to));
   case TypeKind::Array:
-    return std::format("%s[%" PRIu64 "]", type_to_str(*ty.arr_elem_type),
+    return std::format("%s[%" PRIu64 "]", type_kind_to_str(*ty.arr_elem_type),
                        ty.arr_len);
     break;
   }
@@ -67,7 +85,7 @@ std::string type_to_str(const Type &ty) {
 
 void dump(fcc::Instruction &instr) {
   if (instr.has_result)
-    std::print("%{} = ", instr.id);
+    std::print("%{}: {} = ", instr.id, type_kind_to_str(instr.type->kind));
 
   std::print("{}", opcode_to_string(instr.op));
 
@@ -82,6 +100,12 @@ void dump(fcc::Instruction &instr) {
   case OpCode::Sub:
   case OpCode::Mul:
   case OpCode::Div:
+  case OpCode::Lt:
+  case OpCode::Le:
+  case OpCode::Gt:
+  case OpCode::Ge:
+  case OpCode::Eq:
+  case OpCode::Ne:
     std::print(" %{} %{}", instr.operands[0]->id, instr.operands[1]->id);
     break;
 
@@ -125,11 +149,11 @@ void dump(fcc::Function &fn) {
   std::print("fn {}(", fn.name);
   for (auto &pv : fn.params) {
     if (pv == fn.params.back())
-      std::print("{}", type_to_str(*pv->type));
+      std::print("{}", type_kind_to_str(*pv->type));
     else
-      std::print("{}, ", type_to_str(*pv->type));
+      std::print("{}, ", type_kind_to_str(*pv->type));
   }
-  std::println(") -> {} {{", type_to_str(*fn.ret_type));
+  std::println(") -> {} {{", type_kind_to_str(*fn.ret_type));
 
   for (auto &bb : fn.blcks)
     dump(*bb);

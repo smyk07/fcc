@@ -250,17 +250,33 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
     case CXBinaryOperator_Add:
       op = OpCode::Add;
       break;
-
     case CXBinaryOperator_Sub:
       op = OpCode::Sub;
       break;
-
     case CXBinaryOperator_Mul:
       op = OpCode::Mul;
       break;
-
     case CXBinaryOperator_Div:
       op = OpCode::Div;
+      break;
+
+    case CXBinaryOperator_LT:
+      op = OpCode::Lt;
+      break;
+    case CXBinaryOperator_LE:
+      op = OpCode::Le;
+      break;
+    case CXBinaryOperator_GT:
+      op = OpCode::Gt;
+      break;
+    case CXBinaryOperator_GE:
+      op = OpCode::Ge;
+      break;
+    case CXBinaryOperator_EQ:
+      op = OpCode::Eq;
+      break;
+    case CXBinaryOperator_NE:
+      op = OpCode::Ne;
       break;
 
     default:
@@ -286,7 +302,8 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
     break;
   }
 
-  case CXCursor_UnexposedExpr: {
+  case CXCursor_UnexposedExpr:
+  case CXCursor_ParenExpr: {
     CXCursor child = clang_getNullCursor();
 
     clang_visitChildren(

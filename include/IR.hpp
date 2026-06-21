@@ -17,6 +17,13 @@ enum class OpCode {
   Mul,
   Div,
 
+  Lt,
+  Le,
+  Gt,
+  Ge,
+  Eq,
+  Ne,
+
   Ret,
 
   Jmp,
