@@ -1,3 +1,5 @@
+#pragma once
+
 #include "IR.hpp"
 
 namespace fcc {

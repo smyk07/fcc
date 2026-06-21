@@ -8,6 +8,8 @@
 
 namespace fcc {
 
+extern bool debug_enabled;
+
 #define FCC_DEBUG(stmt)                                                        \
   do {                                                                         \
     if (fcc::debug_enabled) {                                                  \
