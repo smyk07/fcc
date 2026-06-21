@@ -1,7 +1,7 @@
 #pragma once
 
-#include "BaseFnPass.hpp"
 #include "IR.hpp"
+#include "passes/BaseFnPass.hpp"
 
 namespace fcc {
 

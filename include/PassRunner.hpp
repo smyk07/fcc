@@ -1,7 +1,9 @@
 #pragma once
 
-#include "BaseFnPass.hpp"
 #include "IR.hpp"
+
+#include "passes/BaseFnPass.hpp"
+#include "passes/DCEFnPass.hpp"
 #include "passes/HelloWorldFnPass.hpp"
 
 #include <array>
@@ -38,13 +40,16 @@ template <typename Pass, std::size_t N> struct PassReg {
   }
 };
 
+#define REGISTER_PASS(name, pass) {name, &create_pass<pass>}
+
 struct PassRunner {
 private:
   const Module &mod;
 
   static std::vector<std::unique_ptr<BaseFnPass>> fn_passes;
-  static constexpr PassReg<BaseFnPass, 1> fn_pass_reg{{{
-      {"HelloWorld", &create_pass<HelloWorldFnPass>},
+  static constexpr PassReg<BaseFnPass, 2> fn_pass_reg{{{
+      REGISTER_PASS("HelloWorld", HelloWorldFnPass),
+      REGISTER_PASS("DCE", DCEFnPass),
   }}};
 
 public:
