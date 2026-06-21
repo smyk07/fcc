@@ -41,11 +41,11 @@ int main(int argc, char *argv[]) {
     fcc::LoweringPass lp{file};
     fcc::Module lowered_module = lp.run();
 
-    FCC_DEBUG(std::println("fcc IR:"));
-    fcc::dump(lowered_module);
-
     fcc::PassRunner pr{lowered_module};
     pr.run(passes);
+
+    FCC_DEBUG(std::println("fcc IR:"));
+    fcc::dump(lowered_module);
   }
 
   catch (const std::exception &e) {
