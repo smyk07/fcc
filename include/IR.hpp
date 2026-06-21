@@ -66,9 +66,17 @@ struct Type {
   Type(TypeKind kind) : kind{kind} {}
 };
 
+enum class ValueKind {
+  Instr,
+  Param,
+};
+
 struct Value {
+  ValueKind kind;
   std::uint64_t id;
   Type *type = nullptr;
+
+  Value() { kind = ValueKind::Param; }
 };
 
 struct ConstData {
@@ -99,6 +107,10 @@ struct Instruction : Value {
   std::vector<Value *> operands;
 
   std::variant<std::monostate, ConstData, PhiData, JmpData, CondBrData> payload;
+
+  Instruction(OpCode op) : op{op} { kind = ValueKind::Instr; }
+
+  Instruction(OpCode op, std::uint64_t id) : op{op} { Value::id = id; }
 };
 
 // fwd decl

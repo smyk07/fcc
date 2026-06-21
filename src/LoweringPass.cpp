@@ -115,9 +115,7 @@ Type *LoweringPass::lower_type(CXType cxtype) {
 }
 
 Instruction *LoweringPass::create_phi(CXCursor var, BasicBlock *bb) {
-  auto phi = std::make_unique<Instruction>();
-  phi->op = OpCode::Phi;
-  phi->id = next_value_id++;
+  auto phi = std::make_unique<Instruction>(OpCode::Phi, next_value_id++);
   phi->type = lower_type(clang_getCursorType(var));
   phi->payload = PhiData{};
 
@@ -239,11 +237,8 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
   switch (clang_getCursorKind(expr)) {
 
   case CXCursor_IntegerLiteral: {
-    auto instr = std::make_unique<Instruction>();
-
-    instr->op = OpCode::Const;
+    auto instr = std::make_unique<Instruction>(OpCode::Const, next_value_id++);
     instr->type = type_ctx.get(TypeKind::I32);
-    instr->id = next_value_id++;
 
     auto literal = get_cursor_text(source.tu, expr);
     auto value = std::stoull(literal, nullptr, 0);
@@ -328,9 +323,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
     Value *lhs = lower_expr(children[0], fn, bb);
     Value *rhs = lower_expr(children[1], fn, bb);
 
-    auto instr = std::make_unique<Instruction>();
-    instr->id = next_value_id++;
-    instr->op = op;
+    auto instr = std::make_unique<Instruction>(op, next_value_id++);
     instr->type = lhs->type;
     instr->operands.push_back(lhs);
     instr->operands.push_back(rhs);
@@ -442,9 +435,8 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     auto else_bb = has_else ? create_block(fn) : nullptr;
     auto merge_bb = create_block(fn);
 
-    auto br = std::make_unique<Instruction>();
+    auto br = std::make_unique<Instruction>(OpCode::CondBr);
     br->has_result = false;
-    br->op = OpCode::CondBr;
     br->payload = CondBrData{.cond = cond_val,
                              .true_target = then_bb,
                              .false_target = has_else ? else_bb : merge_bb};
@@ -460,8 +452,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
 
     if (then_exit->instrs.empty() ||
         !is_terminator(then_exit->instrs.back()->op)) {
-      auto jmp = std::make_unique<Instruction>();
-      jmp->op = OpCode::Jmp;
+      auto jmp = std::make_unique<Instruction>(OpCode::Jmp);
       jmp->has_result = false;
       jmp->payload = JmpData{.target = merge_bb};
 
@@ -474,8 +465,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
       else_exit = lower_stmt(else_cursor, fn, else_bb);
       if (else_exit->instrs.empty() ||
           !is_terminator(else_exit->instrs.back()->op)) {
-        auto jmpelse = std::make_unique<Instruction>();
-        jmpelse->op = OpCode::Jmp;
+        auto jmpelse = std::make_unique<Instruction>(OpCode::Jmp);
         jmpelse->has_result = false;
         jmpelse->payload = JmpData{.target = merge_bb};
         else_exit->instrs.push_back(std::move(jmpelse));
@@ -509,9 +499,8 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
         },
         &ctx);
 
-    auto ret = std::make_unique<Instruction>();
+    auto ret = std::make_unique<Instruction>(OpCode::Ret);
     ret->has_result = false;
-    ret->op = OpCode::Ret;
 
     if (found) {
       Value *ret_val = lower_expr(expr, fn, bb);
