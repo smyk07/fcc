@@ -3,7 +3,7 @@
 #include "IR.hpp"
 
 #include "passes/BaseFnPass.hpp"
-#include "passes/DCEFnPass.hpp"
+#include "passes/DDEFnPass.hpp"
 #include "passes/HelloWorldFnPass.hpp"
 
 #include <array>
@@ -49,7 +49,7 @@ private:
   static std::vector<std::unique_ptr<BaseFnPass>> fn_passes;
   static constexpr PassReg<BaseFnPass, 2> fn_pass_reg{{{
       REGISTER_PASS("HelloWorld", HelloWorldFnPass),
-      REGISTER_PASS("DCE", DCEFnPass),
+      REGISTER_PASS("DDE", DDEFnPass),
   }}};
 
 public:

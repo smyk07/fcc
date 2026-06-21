@@ -9,6 +9,11 @@ Hoping to keep daily Dev log like reports in this file. Days in decending order.
 - Lowered conditional oparators, also found out clang gives you these ParenExpr wrappers for (...) like expressions. lowered that too.
 - lowered ifstmt and found out how buggy my code was :sob:
 - also better printing of function params
+- added basic pass infra, but i ended up overcomplicating it, unordered_map for everything is bad so i took help of chatgpt to help me design a fancy constexpr registry struct for storing passes
+- implemented DDE lesgo
+- also updated the test runner to run differently for pass\_\* tests
+
+> tomorrow will hopefully lower while loop
 
 ## 20/06/2026
 

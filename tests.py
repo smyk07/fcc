@@ -1,11 +1,23 @@
 #!/usr/bin/python
 
-import subprocess
-import argparse
 from pathlib import Path
+import re
+import argparse
+import subprocess
 
 TESTS_DIR = Path("./tests")
 FCC = "./fcc"
+
+
+def get_fcc_command(test: Path):
+    cmd = [FCC, str(test)]
+
+    match = re.match(r"^pass_([a-zA-Z]+)_\d+$", test.stem)
+    if match:
+        pass_name = match.group(1).upper()
+        cmd.append(pass_name)
+
+    return cmd
 
 
 def main():
@@ -22,7 +34,8 @@ def main():
     for test in test_files:
         expected_file = test.with_suffix(".expected")
 
-        result = subprocess.run([FCC, str(test)], capture_output=True, text=True)
+        cmd = get_fcc_command(test)
+        result = subprocess.run(cmd, capture_output=True, text=True)
         actual_output = result.stdout.strip()
 
         if args.update:

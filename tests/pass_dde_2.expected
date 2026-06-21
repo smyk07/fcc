@@ -1,0 +1,14 @@
+fn dead(%0: i32) -> i32 {
+bb_0:
+%1: i32 = const 2
+%2: i32 = const 3
+condbr %0 bb_1 bb_2
+bb_1:
+%3: i32 = add %1 %2
+jmp bb_3
+bb_2:
+jmp bb_3
+bb_3:
+%4: i32 = phi [ bb_1, %3 ], [ bb_2, %2 ]
+ret %4
+}
