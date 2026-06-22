@@ -1,0 +1,66 @@
+fn wheelie() -> i32 {
+bb_0:
+%0: i32 = const 0
+jmp bb_1
+bb_1:
+%1: i32 = phi [ bb_0, %0 ], [ bb_2, %5 ]
+%2: i32 = const 10
+%3: i32 = lt %1 %2
+condbr %3 bb_2 bb_3
+bb_2:
+%4: i32 = const 1
+%5: i32 = add %1 %4
+jmp bb_1
+bb_3:
+ret %1
+}
+fn sum_while() -> i32 {
+bb_4:
+%6: i32 = const 0
+%7: i32 = const 0
+jmp bb_5
+bb_5:
+%11: i32 = phi [ bb_4, %7 ], [ bb_6, %12 ]
+%8: i32 = phi [ bb_4, %6 ], [ bb_6, %14 ]
+%9: i32 = const 4
+%10: i32 = lt %8 %9
+condbr %10 bb_6 bb_7
+bb_6:
+%12: i32 = add %11 %8
+%13: i32 = const 1
+%14: i32 = add %8 %13
+jmp bb_5
+bb_7:
+ret %11
+}
+fn branch_in_loop() -> i32 {
+bb_8:
+%15: i32 = const 0
+%16: i32 = const 0
+jmp bb_9
+bb_9:
+%22: i32 = phi [ bb_8, %16 ], [ bb_14, %30 ]
+%17: i32 = phi [ bb_8, %15 ], [ bb_14, %29 ]
+%18: i32 = const 6
+%19: i32 = lt %17 %18
+condbr %19 bb_10 bb_11
+bb_10:
+%20: i32 = const 3
+%21: i32 = lt %17 %20
+condbr %21 bb_12 bb_13
+bb_11:
+ret %22
+bb_12:
+%23: i32 = const 1
+%24: i32 = add %22 %23
+jmp bb_14
+bb_13:
+%25: i32 = const 2
+%26: i32 = add %22 %25
+jmp bb_14
+bb_14:
+%30: i32 = phi [ bb_12, %24 ], [ bb_13, %26 ]
+%28: i32 = const 1
+%29: i32 = add %17 %28
+jmp bb_9
+}
