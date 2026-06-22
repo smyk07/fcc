@@ -35,3 +35,24 @@ int branch_in_loop() {
 
   return x;
 }
+
+int loop_loop_loop() {
+  int n = 0;
+
+  int i = 0;
+  int j = 0;
+  int k = 0;
+
+  while (i < 10) {
+    while (j < 10) {
+      while (k < 10) {
+        n = n + 1;
+        k = k + 1;
+      }
+      j = j + 1;
+    }
+    i = i + 1;
+  }
+
+  return n;
+}

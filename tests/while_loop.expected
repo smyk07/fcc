@@ -64,3 +64,52 @@ bb_14:
 %29: i32 = add %17 %28
 jmp bb_9
 }
+fn loop_loop_loop() -> i32 {
+bb_15:
+%31: i32 = const 0
+%32: i32 = const 0
+%33: i32 = const 0
+%34: i32 = const 0
+jmp bb_16
+bb_16:
+%56: i32 = phi [ bb_15, %31 ], [ bb_21, %50 ]
+%55: i32 = phi [ bb_15, %34 ], [ bb_21, %49 ]
+%54: i32 = phi [ bb_15, %33 ], [ bb_21, %38 ]
+%35: i32 = phi [ bb_15, %32 ], [ bb_21, %60 ]
+%36: i32 = const 10
+%37: i32 = lt %35 %36
+condbr %37 bb_17 bb_18
+bb_17:
+jmp bb_19
+bb_18:
+ret %56
+bb_19:
+%50: i32 = phi [ bb_17, %56 ], [ bb_24, %44 ]
+%49: i32 = phi [ bb_17, %55 ], [ bb_24, %41 ]
+%38: i32 = phi [ bb_17, %54 ], [ bb_24, %53 ]
+%39: i32 = const 10
+%40: i32 = lt %38 %39
+condbr %40 bb_20 bb_21
+bb_20:
+jmp bb_22
+bb_21:
+%59: i32 = const 1
+%60: i32 = add %35 %59
+jmp bb_16
+bb_22:
+%44: i32 = phi [ bb_20, %50 ], [ bb_23, %46 ]
+%41: i32 = phi [ bb_20, %49 ], [ bb_23, %48 ]
+%42: i32 = const 10
+%43: i32 = lt %41 %42
+condbr %43 bb_23 bb_24
+bb_23:
+%45: i32 = const 1
+%46: i32 = add %44 %45
+%47: i32 = const 1
+%48: i32 = add %41 %47
+jmp bb_22
+bb_24:
+%52: i32 = const 1
+%53: i32 = add %38 %52
+jmp bb_19
+}
