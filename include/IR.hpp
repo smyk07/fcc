@@ -123,6 +123,8 @@ struct BasicBlock {
   bool sealed = false;
   std::vector<std::pair<CXCursor, Instruction *>> incomplete_phis;
 
+  std::vector<BasicBlock *> preds; // cache
+
   std::vector<BasicBlock *> successors() const;
   std::vector<BasicBlock *> predecessors(Function *fn) const;
 };

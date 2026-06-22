@@ -142,6 +142,7 @@ BasicBlock *LoweringPass::create_block(Function *fn) {
 void LoweringPass::seal_block(BasicBlock *bb,
                               const std::vector<BasicBlock *> &preds) {
   bb->sealed = true;
+  bb->preds = preds;
 
   for (auto &[var, phi] : bb->incomplete_phis) {
     PhiData data;
@@ -180,10 +181,8 @@ Value *LoweringPass::read_variable_recursive(CXCursor var, BasicBlock *bb) {
     return phi;
   }
 
-  auto preds = bb->predecessors(current_fn);
-
-  if (preds.size() == 1) {
-    Value *val = read_variable(var, preds[0]);
+  if (bb->preds.size() == 1) {
+    Value *val = read_variable(var, bb->preds[0]);
     write_variable(var, bb, val);
     return val;
   }
@@ -191,7 +190,7 @@ Value *LoweringPass::read_variable_recursive(CXCursor var, BasicBlock *bb) {
   auto *phi = create_phi(var, bb);
   write_variable(var, bb, phi);
 
-  return add_phi_operands(var, phi, preds);
+  return add_phi_operands(var, phi, bb->preds);
 }
 
 Value *LoweringPass::add_phi_operands(CXCursor var, Instruction *phi,
