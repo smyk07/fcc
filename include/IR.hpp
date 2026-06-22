@@ -101,16 +101,15 @@ struct CondBrData {
 };
 
 struct Instruction : Value {
-  bool has_result = true;
-
   OpCode op;
   std::vector<Value *> operands;
 
+  bool has_result;
+
   std::variant<std::monostate, ConstData, PhiData, JmpData, CondBrData> payload;
 
-  Instruction(OpCode op) : op{op} { kind = ValueKind::Instr; }
-
-  Instruction(OpCode op, std::uint64_t id) : Instruction(op) { Value::id = id; }
+  Instruction(OpCode op);
+  Instruction(OpCode op, std::uint64_t id);
 };
 
 // fwd decl

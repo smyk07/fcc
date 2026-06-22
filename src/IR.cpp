@@ -56,6 +56,36 @@ std::vector<BasicBlock *> BasicBlock::predecessors(Function *fn) const {
   return preds;
 }
 
+Instruction::Instruction(OpCode op) : op{op} {
+  kind = ValueKind::Instr;
+
+  switch (op) {
+  case OpCode::Const:
+  case OpCode::Add:
+  case OpCode::Sub:
+  case OpCode::Mul:
+  case OpCode::Div:
+  case OpCode::Lt:
+  case OpCode::Le:
+  case OpCode::Gt:
+  case OpCode::Ge:
+  case OpCode::Eq:
+  case OpCode::Ne:
+  case OpCode::Phi:
+    has_result = true;
+    break;
+  case OpCode::Ret:
+  case OpCode::Jmp:
+  case OpCode::CondBr:
+    has_result = false;
+    break;
+  }
+}
+
+Instruction::Instruction(OpCode op, std::uint64_t id) : Instruction(op) {
+  Value::id = id;
+}
+
 void Function::replace_all_uses(Value *oldv, Value *newv) {
   for (auto &bb : blcks) {
     for (auto &instr : bb->instrs) {
