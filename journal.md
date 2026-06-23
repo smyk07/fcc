@@ -4,6 +4,10 @@ This is a learning project for me, for learning IR building and Optimization Pas
 
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
 
+## 23/06/2026
+
+- Lowered break and continue today. This also exposed a condition in tryRemoveTrivialPhi where a dangling pointer would be left in the defs map which caused use after frees later.
+
 ## 22/06/2026
 
 - Lowered while loop today. Found another bug where if successors is called on a block during lowering (through predecessors) before it is fully populated, the function could hit a non-terminating instruction and crash. Better to cache predecessors while sealing.

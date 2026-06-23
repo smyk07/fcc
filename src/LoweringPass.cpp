@@ -501,10 +501,12 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     entry_jmp->payload = JmpData{.target = header_bb};
     bb->instrs.push_back(std::move(entry_jmp));
 
-    Value *cond_val = lower_expr(cond_cursor, fn, header_bb);
-
     auto body_bb = create_block(fn);
     auto exit_bb = create_block(fn);
+
+    loop_stack.push_back({header_bb, exit_bb});
+
+    Value *cond_val = lower_expr(cond_cursor, fn, header_bb);
 
     auto br = std::make_unique<Instruction>(OpCode::CondBr);
     br->payload = CondBrData{
@@ -525,7 +527,29 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     seal_block(header_bb, {bb, body_exit});
     seal_block(exit_bb, {header_bb});
 
+    loop_stack.pop_back();
+
     return exit_bb;
+  }
+
+  case CXCursor_BreakStmt: {
+    auto exit_bb = loop_stack.back().second;
+
+    auto break_jmp = std::make_unique<Instruction>(OpCode::Jmp);
+    break_jmp->payload = JmpData{.target = exit_bb};
+    bb->instrs.push_back(std::move(break_jmp));
+
+    return bb;
+  }
+
+  case CXCursor_ContinueStmt: {
+    auto header_bb = loop_stack.back().first;
+
+    auto cont_jmp = std::make_unique<Instruction>(OpCode::Jmp);
+    cont_jmp->payload = JmpData{.target = header_bb};
+    bb->instrs.push_back(std::move(cont_jmp));
+
+    return bb;
   }
 
   case CXCursor_ReturnStmt: {

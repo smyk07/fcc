@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 struct CursorHash {
@@ -45,23 +46,25 @@ private:
   std::uint64_t next_bb_id = 0;
   std::uint64_t next_value_id = 0;
 
+  static TypeCtx type_ctx;
+
   std::unordered_map<
       BasicBlock *, std::unordered_map<CXCursor, Value *, CursorHash, CursorEq>>
       defs;
 
-  static TypeCtx type_ctx;
+  std::vector<std::pair<BasicBlock *, BasicBlock *>>
+      loop_stack; // {header_bb, exir_bb}
 
   static Type *lower_type(CXType cxtype);
 
-  Instruction *create_phi(CXCursor var, BasicBlock *bb);
-
   BasicBlock *create_block(Function *fn);
-
   void seal_block(BasicBlock *bb, const std::vector<BasicBlock *> &preds);
 
   void write_variable(CXCursor var, BasicBlock *bb, Value *val);
   Value *read_variable(CXCursor var, BasicBlock *bb);
   Value *read_variable_recursive(CXCursor var, BasicBlock *bb);
+
+  Instruction *create_phi(CXCursor var, BasicBlock *bb);
   Value *add_phi_operands(CXCursor var, Instruction *phi,
                           const std::vector<BasicBlock *> &preds);
   Value *try_remove_trivial_phi(Instruction *phi);
