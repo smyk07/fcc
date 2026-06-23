@@ -227,6 +227,13 @@ Value *LoweringPass::try_remove_trivial_phi(Instruction *phi) {
   if (!same)
     return phi;
 
+  for (auto &[bb, map] : defs) {
+    for (auto &[var, val] : map) {
+      if (val == phi)
+        val = same;
+    }
+  }
+
   current_fn->replace_all_uses(phi, same);
   current_fn->erase_instr(phi);
   return same;
