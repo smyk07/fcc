@@ -33,5 +33,6 @@ Prerequisites:
 
 - make
 - clang
+- mold (optional)
 - clang development libraries
 - python

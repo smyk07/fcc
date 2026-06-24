@@ -2,6 +2,11 @@ CXX      := clang++
 CXXFLAGS := -Iinclude -O0 -std=c++23 -Wall -Wextra -g \
             -fsanitize=address,undefined,leak \
             -MMD -MP
+LDFLAGS :=
+
+ifeq ($(shell command -v mold >/dev/null 2>&1 && echo yes),yes)
+    LDFLAGS := -fuse-ld=mold
+endif
 
 TARGET    := fcc
 BUILD_DIR := .build
@@ -15,7 +20,7 @@ DEP := $(OBJ:.o=.d)
 all: $(TARGET)
 
 $(TARGET): $(OBJ)
-	$(CXX) $(CXXFLAGS) -o $@ $^ -lclang
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $^ -lclang
 
 $(BUILD_DIR)/%.o: src/%.cpp
 	@mkdir -p $(dir $@)
