@@ -4,6 +4,11 @@ This is a learning project for me, for learning IR building and Optimization Pas
 
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
 
+## 24/06/2026
+
+- Lowered for loop today, and unexpectedly got it at the first try lesgooooooo.
+- although i do need to handle some edge cases, such as empty CompountStmt, and an BinaryOperator = instead of a VarDecl in loop init.
+
 ## 23/06/2026
 
 - Lowered break and continue today. This also exposed a condition in tryRemoveTrivialPhi where a dangling pointer would be left in the defs map which caused use after frees later.

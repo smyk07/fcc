@@ -53,7 +53,7 @@ private:
       defs;
 
   std::vector<std::pair<BasicBlock *, BasicBlock *>>
-      loop_stack; // {header_bb, exir_bb}
+      loop_stack; // {continue_bb, exit_bb}
 
   static Type *lower_type(CXType cxtype);
 
