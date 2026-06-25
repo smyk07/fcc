@@ -38,3 +38,21 @@ int more_fold() {
   int d = c - 7;
   return d;
 }
+
+int add_zero(int a) {
+  int x = a + 0;
+  int y = 0 + a;
+  return x + y;
+}
+
+int sub_div(int a) {
+  int x = a - 0;
+  int y = a / 1;
+  return x + y;
+}
+
+int no_fold_again(int a) {
+  int x = 0 - a;
+  int y = 1 / a;
+  return x + y;
+}

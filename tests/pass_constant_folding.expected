@@ -36,3 +36,22 @@ bb_6:
 %30: i32 = const 14
 ret %30
 }
+fn add_zero(%31: i32) -> i32 {
+bb_7:
+%36: i32 = add %31 %31
+ret %36
+}
+fn sub_div(%37: i32) -> i32 {
+bb_8:
+%42: i32 = add %37 %37
+ret %42
+}
+fn no_fold_again(%43: i32) -> i32 {
+bb_9:
+%44: i32 = const 0
+%45: i32 = sub %44 %43
+%46: i32 = const 1
+%47: i32 = div %46 %43
+%48: i32 = add %45 %47
+ret %48
+}

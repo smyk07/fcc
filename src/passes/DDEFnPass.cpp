@@ -9,7 +9,7 @@ namespace fcc {
  * DDE : Dead Definitions Elimination
  */
 
-static inline bool is_critical(const Instruction &instr) {
+static bool is_critical(const Instruction &instr) {
   switch (instr.op) {
   case OpCode::Ret:
   case OpCode::CondBr:
