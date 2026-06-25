@@ -19,8 +19,7 @@ def get_passes_from_comment(test: Path):
     if not match:
         return []
 
-    passes = match.group(1).split()
-    return [p.upper() for p in passes]
+    return match.group(1).split()
 
 
 def get_fcc_command(test: Path):
