@@ -1,10 +1,11 @@
 #pragma once
 
-#include "IR.hpp"
-
 #include "passes/BaseFnPass.hpp"
+#include "passes/ConstantFoldingFnPass.hpp"
 #include "passes/DDEFnPass.hpp"
 #include "passes/HelloWorldFnPass.hpp"
+
+#include "IR.hpp"
 
 #include <array>
 #include <format>
@@ -47,9 +48,10 @@ private:
   const Module &mod;
 
   static std::vector<std::unique_ptr<BaseFnPass>> fn_passes;
-  static constexpr PassReg<BaseFnPass, 2> fn_pass_reg{{{
+  static constexpr PassReg<BaseFnPass, 3> fn_pass_reg{{{
       REGISTER_PASS("HelloWorld", HelloWorldFnPass),
       REGISTER_PASS("DDE", DDEFnPass),
+      REGISTER_PASS("ConstantFolding", ConstantFoldingFnPass),
   }}};
 
 public:
