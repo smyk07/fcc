@@ -4,6 +4,11 @@ This is a learning project for me, for learning IR building and Optimization Pas
 
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
 
+## 25/06/2026
+
+- Implemented Constant folding today, it was fun.
+- man i keep updating my test script like every day, but its okay
+
 ## 24/06/2026
 
 - Lowered for loop today, and unexpectedly got it at the first try lesgooooooo.
