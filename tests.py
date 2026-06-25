@@ -11,13 +11,23 @@ TESTS_DIR = Path("./tests")
 FCC = "./fcc"
 
 
+def get_passes_from_comment(test: Path):
+    with test.open() as f:
+        first_line = f.readline().strip()
+
+    match = re.match(r"^//\s*(.+)$", first_line)
+    if not match:
+        return []
+
+    passes = match.group(1).split()
+    return [p.upper() for p in passes]
+
+
 def get_fcc_command(test: Path):
     cmd = [FCC, str(test)]
 
-    match = re.match(r"^pass_([a-zA-Z]+)_\d+$", test.stem)
-    if match:
-        pass_name = match.group(1).upper()
-        cmd.append(pass_name)
+    passes = get_passes_from_comment(test)
+    cmd.extend(passes)
 
     return cmd
 
