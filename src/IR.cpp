@@ -8,10 +8,6 @@
 
 namespace fcc {
 
-bool is_terminator(OpCode op) {
-  return op == OpCode::Ret || op == OpCode::Jmp || op == OpCode::CondBr;
-}
-
 std::vector<BasicBlock *> BasicBlock::successors() const {
   if (instrs.empty()) {
     return {};
@@ -65,12 +61,15 @@ Instruction::Instruction(OpCode op) : op{op} {
   case OpCode::Sub:
   case OpCode::Mul:
   case OpCode::Div:
+  case OpCode::Mod:
+  case OpCode::Neg:
   case OpCode::Lt:
   case OpCode::Le:
   case OpCode::Gt:
   case OpCode::Ge:
   case OpCode::Eq:
   case OpCode::Ne:
+  case OpCode::LNot:
   case OpCode::Phi:
     has_result = true;
     break;

@@ -8,7 +8,7 @@ namespace fcc {
 
 namespace {
 
-const char *opcode_to_string(const OpCode op) {
+constexpr const char *opcode_to_string(const OpCode op) {
   switch (op) {
   case OpCode::Const:
     return "const";
@@ -21,6 +21,11 @@ const char *opcode_to_string(const OpCode op) {
     return "mul";
   case OpCode::Div:
     return "div";
+  case OpCode::Mod:
+    return "mod";
+
+  case OpCode::Neg:
+    return "neg";
 
   case OpCode::Lt:
     return "lt";
@@ -34,6 +39,9 @@ const char *opcode_to_string(const OpCode op) {
     return "eq";
   case OpCode::Ne:
     return "ne";
+
+  case OpCode::LNot:
+    return "lnot";
 
   case OpCode::Ret:
     return "ret";
@@ -102,6 +110,7 @@ void dump(fcc::Instruction &instr) {
   case OpCode::Sub:
   case OpCode::Mul:
   case OpCode::Div:
+  case OpCode::Mod:
   case OpCode::Lt:
   case OpCode::Le:
   case OpCode::Gt:
@@ -109,6 +118,11 @@ void dump(fcc::Instruction &instr) {
   case OpCode::Eq:
   case OpCode::Ne:
     std::print(" %{} %{}", instr.operands[0]->id, instr.operands[1]->id);
+    break;
+
+  case OpCode::Neg:
+  case OpCode::LNot:
+    std::print(" %{}", instr.operands[0]->id);
     break;
 
   case OpCode::Ret:

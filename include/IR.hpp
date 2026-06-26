@@ -16,6 +16,9 @@ enum class OpCode {
   Sub,
   Mul,
   Div,
+  Mod,
+
+  Neg,
 
   Lt,
   Le,
@@ -23,6 +26,8 @@ enum class OpCode {
   Ge,
   Eq,
   Ne,
+
+  LNot,
 
   Ret,
 
@@ -32,7 +37,28 @@ enum class OpCode {
   Phi,
 };
 
-bool is_terminator(OpCode op);
+constexpr bool is_terminator(OpCode op) {
+  switch (op) {
+  case OpCode::Ret:
+  case OpCode::Jmp:
+  case OpCode::CondBr:
+    return true;
+
+  default:
+    return false;
+  }
+}
+
+constexpr bool is_unary(OpCode op) {
+  switch (op) {
+  case OpCode::Neg:
+  case OpCode::LNot:
+    return true;
+
+  default:
+    return false;
+  }
+}
 
 enum class TypeKind {
   I8,

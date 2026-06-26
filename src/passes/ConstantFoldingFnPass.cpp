@@ -35,6 +35,8 @@ constexpr inline bool is_foldable(OpCode op) {
   case OpCode::Ge:
   case OpCode::Eq:
   case OpCode::Ne:
+  case OpCode::Neg:
+  case OpCode::LNot:
     return true;
 
   default:
@@ -61,6 +63,31 @@ void fold_to_const(Instruction *instr, std::uint64_t bits) {
 }
 
 bool try_fold(Instruction *instr, Function *fn) {
+  if (is_unary(instr->op)) {
+    auto *operand = as_const_instr(instr->operands[0]);
+    if (!operand)
+      return false;
+
+    auto bits = std::get<ConstData>(operand->payload).bits;
+    uint64_t result;
+
+    switch (instr->op) {
+    case OpCode::Neg:
+      result = -bits;
+      break;
+
+    case OpCode::LNot:
+      result = (bits == 0);
+      break;
+
+    default:
+      return false;
+    }
+
+    fold_to_const(instr, result);
+    return true;
+  }
+
   auto *lhs = as_const_instr(instr->operands[0]);
   auto *rhs = as_const_instr(instr->operands[1]);
 

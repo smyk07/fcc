@@ -56,3 +56,5 @@ int no_fold_again(int a) {
   int y = 1 / a;
   return x + y;
 }
+
+int fold_neg_expr() { return -(3 + 2); }

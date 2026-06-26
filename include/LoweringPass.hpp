@@ -69,7 +69,7 @@ private:
                           const std::vector<BasicBlock *> &preds);
   Value *try_remove_trivial_phi(Instruction *phi);
 
-  Value *lower_expr(CXCursor expr, Function *fn, BasicBlock *bb);
+  Value *lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb);
   BasicBlock *lower_stmt(CXCursor stmt, Function *fn, BasicBlock *bb);
   void lower_function(CXCursor fn_decl, Module *mod);
 };

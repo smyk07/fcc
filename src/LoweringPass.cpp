@@ -243,7 +243,7 @@ Value *LoweringPass::try_remove_trivial_phi(Instruction *phi) {
   return same;
 }
 
-Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
+Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
   switch (clang_getCursorKind(expr)) {
 
   case CXCursor_IntegerLiteral: {
@@ -257,6 +257,48 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
     auto *result = instr.get();
     bb->instrs.push_back(std::move(instr));
 
+    return result;
+  }
+
+  case CXCursor_UnaryOperator: {
+    auto clang_op = clang_getCursorUnaryOperatorKind(expr);
+
+    CXCursor child = clang_getNullCursor();
+    clang_visitChildren(
+        expr,
+        [](CXCursor child, CXCursor /* parent */, CXClientData data) {
+          *static_cast<CXCursor *>(data) = child;
+          return CXChildVisit_Continue;
+        },
+        &child);
+
+    OpCode op;
+    switch (clang_op) {
+    case CXUnaryOperator_Plus:
+      return lower_expr(child, fn, bb);
+
+    case CXUnaryOperator_Minus:
+      op = OpCode::Neg;
+      break;
+
+    case CXUnaryOperator_LNot:
+      op = OpCode::LNot;
+      break;
+
+    default:
+      throw_error(std::format(
+          "unsupported unary type {}",
+          cxstring_to_string(clang_getUnaryOperatorKindSpelling(clang_op))));
+    }
+
+    Value *operand = lower_expr(child, fn, bb);
+
+    auto instr = std::make_unique<Instruction>(op, next_value_id++);
+    instr->type = operand->type;
+    instr->operands.push_back(operand);
+
+    Value *result = instr.get();
+    bb->instrs.push_back(std::move(instr));
     return result;
   }
 
@@ -304,6 +346,9 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
     case CXBinaryOperator_Div:
       op = OpCode::Div;
       break;
+    case CXBinaryOperator_Rem:
+      op = OpCode::Mod;
+      break;
 
     case CXBinaryOperator_LT:
       op = OpCode::Lt;
@@ -324,6 +369,75 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
       op = OpCode::Ne;
       break;
 
+    case CXBinaryOperator_LAnd:
+    case CXBinaryOperator_LOr: {
+      Value *lhs = lower_expr(children[0], fn, bb);
+
+      auto rhs_bb = create_block(fn);
+      auto true_bb = create_block(fn);
+      auto false_bb = create_block(fn);
+      auto merge_bb = create_block(fn);
+
+      auto lhs_br = std::make_unique<Instruction>(OpCode::CondBr);
+      lhs_br->payload = CondBrData{
+          .cond = lhs,
+          .true_target = (clang_op == CXBinaryOperator_LAnd) ? rhs_bb : true_bb,
+          .false_target =
+              (clang_op == CXBinaryOperator_LAnd) ? false_bb : rhs_bb,
+      };
+      bb->instrs.push_back(std::move(lhs_br));
+
+      seal_block(rhs_bb, {bb});
+
+      Value *rhs = lower_expr(children[1], fn, rhs_bb);
+
+      auto rhs_br = std::make_unique<Instruction>(OpCode::CondBr);
+      rhs_br->payload = CondBrData{
+          .cond = rhs,
+          .true_target = true_bb,
+          .false_target = false_bb,
+      };
+      rhs_bb->instrs.push_back(std::move(rhs_br));
+
+      seal_block(true_bb, {rhs_bb});
+      seal_block(false_bb, {bb, rhs_bb});
+
+      auto true_jmp = std::make_unique<Instruction>(OpCode::Jmp);
+      true_jmp->payload = JmpData{.target = merge_bb};
+      true_bb->instrs.push_back(std::move(true_jmp));
+
+      auto false_jmp = std::make_unique<Instruction>(OpCode::Jmp);
+      false_jmp->payload = JmpData{.target = merge_bb};
+      false_bb->instrs.push_back(std::move(false_jmp));
+
+      seal_block(merge_bb, {true_bb, false_bb});
+
+      auto one = std::make_unique<Instruction>(OpCode::Const, next_value_id++);
+      one->type = type_ctx.get(TypeKind::I32);
+      one->payload = ConstData{.bits = 1};
+      auto *one_ptr = one.get();
+      merge_bb->instrs.push_back(std::move(one));
+
+      auto zero = std::make_unique<Instruction>(OpCode::Const, next_value_id++);
+      zero->type = type_ctx.get(TypeKind::I32);
+      zero->payload = ConstData{.bits = 0};
+      auto *zero_ptr = zero.get();
+      merge_bb->instrs.push_back(std::move(zero));
+
+      auto phi = std::make_unique<Instruction>(OpCode::Phi, next_value_id++);
+      phi->type = type_ctx.get(TypeKind::I32);
+
+      PhiData data;
+      data.incoming.push_back({true_bb, one_ptr});
+      data.incoming.push_back({false_bb, zero_ptr});
+      phi->payload = std::move(data);
+
+      Value *result = phi.get();
+      merge_bb->instrs.push_back(std::move(phi));
+      bb = merge_bb;
+      return result;
+    }
+
     default:
       throw_error(std::format(
           "unsupported binary type {}",
@@ -341,8 +455,6 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *bb) {
     Value *result = instr.get();
     bb->instrs.push_back(std::move(instr));
     return result;
-
-    break;
   }
 
   case CXCursor_UnexposedExpr:
