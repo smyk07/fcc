@@ -6,6 +6,8 @@
 
 namespace fcc {
 
+namespace {
+
 const char *opcode_to_string(const OpCode op) {
   switch (op) {
   case OpCode::Const:
@@ -171,6 +173,8 @@ void dump(fcc::Function &fn) {
 
   std::println("}}");
 }
+
+} // namespace
 
 void dump(fcc::Module &module) {
   for (auto &fn : module.funcs)

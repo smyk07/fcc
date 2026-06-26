@@ -4,6 +4,10 @@ This is a learning project for me, for learning IR building and Optimization Pas
 
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
 
+## 26/06/2026
+
+- made a coding style change, using anonymous namespace instead of static, I carried over my habits from C.
+
 ## 25/06/2026
 
 - Implemented Constant folding today, it was fun.

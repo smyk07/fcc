@@ -13,6 +13,12 @@
 
 namespace fcc {
 
+namespace {
+
+Function *current_fn = nullptr;
+
+} // namespace
+
 Type *TypeCtx::get(TypeKind kind) {
   auto it = primitives.find(kind);
   if (it != primitives.end())
@@ -124,8 +130,6 @@ Instruction *LoweringPass::create_phi(CXCursor var, BasicBlock *bb) {
 
   return ptr;
 }
-
-static Function *current_fn = nullptr;
 
 BasicBlock *LoweringPass::create_block(Function *fn) {
   auto bb = std::make_unique<BasicBlock>();

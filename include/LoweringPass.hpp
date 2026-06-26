@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+namespace fcc {
+
 struct CursorHash {
   size_t operator()(CXCursor c) const { return clang_hashCursor(c); }
 };
@@ -17,8 +19,6 @@ struct CursorEq {
     return clang_equalCursors(a, b);
   }
 };
-
-namespace fcc {
 
 struct TypeCtx {
 private:

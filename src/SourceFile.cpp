@@ -8,6 +8,35 @@
 
 namespace fcc {
 
+namespace {
+
+void dump_cursor(CXCursor cursor, int depth) {
+  for (auto i = 0; i < depth; ++i)
+    std::print("  ");
+
+  auto kind = cxstring_to_string(
+      clang_getCursorKindSpelling(clang_getCursorKind(cursor)));
+
+  auto spelling = cxstring_to_string(clang_getCursorSpelling(cursor));
+
+  if (spelling.empty())
+    std::println("{}", kind);
+  else
+    std::println("{} {}", kind, spelling);
+
+  int next_depth = depth + 1;
+  clang_visitChildren(
+      cursor,
+      [](CXCursor child, CXCursor /* parent */, CXClientData client_data) {
+        auto *current_depth = static_cast<int *>(client_data);
+        dump_cursor(child, *current_depth);
+        return CXChildVisit_Continue;
+      },
+      &next_depth);
+}
+
+} // namespace
+
 SourceFile::SourceFile(const char *filepath) {
   index = clang_createIndex(0, 0);
 
@@ -52,31 +81,6 @@ SourceFile::SourceFile(const char *filepath) {
 SourceFile::~SourceFile() {
   clang_disposeTranslationUnit(tu);
   clang_disposeIndex(index);
-}
-
-static void dump_cursor(CXCursor cursor, int depth) {
-  for (auto i = 0; i < depth; ++i)
-    std::print("  ");
-
-  auto kind = cxstring_to_string(
-      clang_getCursorKindSpelling(clang_getCursorKind(cursor)));
-
-  auto spelling = cxstring_to_string(clang_getCursorSpelling(cursor));
-
-  if (spelling.empty())
-    std::println("{}", kind);
-  else
-    std::println("{} {}", kind, spelling);
-
-  int next_depth = depth + 1;
-  clang_visitChildren(
-      cursor,
-      [](CXCursor child, CXCursor /* parent */, CXClientData client_data) {
-        auto *current_depth = static_cast<int *>(client_data);
-        dump_cursor(child, *current_depth);
-        return CXChildVisit_Continue;
-      },
-      &next_depth);
 }
 
 void dump(SourceFile &source) { dump_cursor(source.root, 0); }

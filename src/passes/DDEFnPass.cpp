@@ -1,3 +1,7 @@
+/*
+ * DDE : Dead Definitions Elimination
+ */
+
 #include "passes/DDEFnPass.hpp"
 #include "IR.hpp"
 
@@ -5,11 +9,9 @@
 
 namespace fcc {
 
-/*
- * DDE : Dead Definitions Elimination
- */
+namespace {
 
-static bool is_critical(const Instruction &instr) {
+bool is_critical(const Instruction &instr) {
   switch (instr.op) {
   case OpCode::Ret:
   case OpCode::CondBr:
@@ -20,6 +22,8 @@ static bool is_critical(const Instruction &instr) {
     return false;
   }
 }
+
+} // namespace
 
 bool DDEFnPass::run(Function &fn) {
   std::vector<Instruction *> worklist;

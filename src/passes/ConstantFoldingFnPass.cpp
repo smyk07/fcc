@@ -1,12 +1,3 @@
-#include "passes/ConstantFoldingFnPass.hpp"
-
-#include "IR.hpp"
-
-#include <cstdint>
-#include <memory>
-
-namespace fcc {
-
 /*
  * Constant Folding
  *
@@ -21,7 +12,18 @@ namespace fcc {
  * %0: i32 = const 13
  */
 
-static constexpr inline bool is_foldable(OpCode op) {
+#include "passes/ConstantFoldingFnPass.hpp"
+
+#include "IR.hpp"
+
+#include <cstdint>
+#include <memory>
+
+namespace fcc {
+
+namespace {
+
+constexpr inline bool is_foldable(OpCode op) {
   switch (op) {
   case OpCode::Add:
   case OpCode::Sub:
@@ -40,7 +42,7 @@ static constexpr inline bool is_foldable(OpCode op) {
   }
 }
 
-static Instruction *as_const_instr(Value *v) {
+Instruction *as_const_instr(Value *v) {
   if (v->kind != ValueKind::Instr)
     return nullptr;
 
@@ -52,13 +54,13 @@ static Instruction *as_const_instr(Value *v) {
   return instr;
 }
 
-static void fold_to_const(Instruction *instr, std::uint64_t bits) {
+void fold_to_const(Instruction *instr, std::uint64_t bits) {
   instr->op = OpCode::Const;
   instr->operands.clear();
   instr->payload = ConstData{.bits = bits};
 }
 
-static bool try_fold(Instruction *instr, Function *fn) {
+bool try_fold(Instruction *instr, Function *fn) {
   auto *lhs = as_const_instr(instr->operands[0]);
   auto *rhs = as_const_instr(instr->operands[1]);
 
@@ -181,6 +183,8 @@ static bool try_fold(Instruction *instr, Function *fn) {
 
   return false;
 }
+
+} // namespace
 
 bool ConstantFoldingFnPass::run(Function &fn) {
   bool changed = false;
