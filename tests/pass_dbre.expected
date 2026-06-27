@@ -1,0 +1,115 @@
+tests/pass_dbre.c:56:9: warning: use of logical '||' with constant operand [-Wconstant-logical-operand]
+fn always_true() -> i32 {
+bb_0:
+jmp bb_1
+bb_1:
+%1: i32 = const 10
+ret %1
+bb_2:
+%2: i32 = const 20
+ret %2
+bb_3:
+}
+fn always_false() -> i32 {
+bb_4:
+jmp bb_6
+bb_5:
+%4: i32 = const 10
+ret %4
+bb_6:
+%5: i32 = const 20
+ret %5
+bb_7:
+}
+fn folded_true() -> i32 {
+bb_8:
+jmp bb_9
+bb_9:
+%9: i32 = const 1
+ret %9
+bb_10:
+%10: i32 = const 0
+ret %10
+bb_11:
+}
+fn folded_false() -> i32 {
+bb_12:
+jmp bb_14
+bb_13:
+%16: i32 = const 1
+ret %16
+bb_14:
+%17: i32 = const 0
+ret %17
+bb_15:
+}
+fn nested_dead_branch() -> i32 {
+bb_16:
+jmp bb_17
+bb_17:
+jmp bb_20
+bb_18:
+%22: i32 = const 3
+ret %22
+bb_19:
+%20: i32 = const 1
+ret %20
+bb_20:
+%21: i32 = const 2
+ret %21
+bb_21:
+jmp bb_18
+}
+fn logical_and_dead() -> i32 {
+bb_22:
+jmp bb_23
+bb_23:
+jmp bb_25
+bb_24:
+jmp bb_26
+bb_25:
+jmp bb_26
+bb_26:
+%25: i32 = const 1
+%26: i32 = const 0
+%27: i32 = phi [ bb_24, %25 ], [ bb_25, %26 ]
+condbr %27 bb_27 bb_28
+bb_27:
+%28: i32 = const 1
+ret %28
+bb_28:
+%29: i32 = const 0
+ret %29
+}
+fn logical_or_dead() -> i32 {
+bb_29:
+jmp bb_30
+bb_30:
+jmp bb_31
+bb_31:
+jmp bb_33
+bb_32:
+jmp bb_33
+bb_33:
+%32: i32 = const 1
+%33: i32 = const 0
+%34: i32 = phi [ bb_31, %32 ], [ bb_32, %33 ]
+condbr %34 bb_34 bb_35
+bb_34:
+%35: i32 = const 1
+ret %35
+bb_35:
+%36: i32 = const 0
+ret %36
+}
+fn chained() -> i32 {
+bb_36:
+jmp bb_37
+bb_37:
+%42: i32 = const 1
+ret %42
+bb_38:
+%43: i32 = const 0
+ret %43
+bb_39:
+}

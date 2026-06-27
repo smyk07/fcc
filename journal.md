@@ -7,6 +7,7 @@ Hoping to keep daily Dev log like reports in this file. Days in decending order.
 ## 27/06/2026
 
 - lowered function calls today.
+- also implemented DBrE. writing passes is so fun
 
 ## 26/06/2026
 
