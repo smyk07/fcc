@@ -70,6 +70,7 @@ Instruction::Instruction(OpCode op) : op{op} {
   case OpCode::Eq:
   case OpCode::Ne:
   case OpCode::LNot:
+  case OpCode::Call:
   case OpCode::Phi:
     has_result = true;
     break;
@@ -124,6 +125,11 @@ void Function::erase_instr(Instruction *dead) {
       break;
     }
   }
+}
+
+Function *Module::find_func(const std::string &name) const {
+  auto it = fn_map.find(name);
+  return it == fn_map.end() ? nullptr : it->second;
 }
 
 } // namespace fcc

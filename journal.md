@@ -4,9 +4,14 @@ This is a learning project for me, for learning IR building and Optimization Pas
 
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
 
+## 27/06/2026
+
+- lowered function calls today.
+
 ## 26/06/2026
 
 - made a coding style change, using anonymous namespace instead of static, I carried over my habits from C.
+- lowered some unary operators today, and logical binary operators land and lor which were a mess :sob:, issok tho
 
 ## 25/06/2026
 

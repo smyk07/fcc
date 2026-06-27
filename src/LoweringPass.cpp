@@ -243,7 +243,8 @@ Value *LoweringPass::try_remove_trivial_phi(Instruction *phi) {
   return same;
 }
 
-Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
+Value *LoweringPass::lower_expr(CXCursor expr, Module *mod, Function *fn,
+                                BasicBlock *&bb) {
   switch (clang_getCursorKind(expr)) {
 
   case CXCursor_IntegerLiteral: {
@@ -275,7 +276,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
     OpCode op;
     switch (clang_op) {
     case CXUnaryOperator_Plus:
-      return lower_expr(child, fn, bb);
+      return lower_expr(child, mod, fn, bb);
 
     case CXUnaryOperator_Minus:
       op = OpCode::Neg;
@@ -291,7 +292,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
           cxstring_to_string(clang_getUnaryOperatorKindSpelling(clang_op))));
     }
 
-    Value *operand = lower_expr(child, fn, bb);
+    Value *operand = lower_expr(child, mod, fn, bb);
 
     auto instr = std::make_unique<Instruction>(op, next_value_id++);
     instr->type = operand->type;
@@ -328,7 +329,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
           },
           &children);
 
-      Value *val = lower_expr(children[1], fn, bb);
+      Value *val = lower_expr(children[1], mod, fn, bb);
       CXCursor var = clang_getCursorReferenced(children[0]);
       write_variable(var, bb, val);
       return val;
@@ -371,7 +372,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
 
     case CXBinaryOperator_LAnd:
     case CXBinaryOperator_LOr: {
-      Value *lhs = lower_expr(children[0], fn, bb);
+      Value *lhs = lower_expr(children[0], mod, fn, bb);
 
       auto rhs_bb = create_block(fn);
       auto true_bb = create_block(fn);
@@ -389,7 +390,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
 
       seal_block(rhs_bb, {bb});
 
-      Value *rhs = lower_expr(children[1], fn, rhs_bb);
+      Value *rhs = lower_expr(children[1], mod, fn, rhs_bb);
 
       auto rhs_br = std::make_unique<Instruction>(OpCode::CondBr);
       rhs_br->payload = CondBrData{
@@ -444,8 +445,8 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
           cxstring_to_string(clang_getBinaryOperatorKindSpelling(clang_op))));
     }
 
-    Value *lhs = lower_expr(children[0], fn, bb);
-    Value *rhs = lower_expr(children[1], fn, bb);
+    Value *lhs = lower_expr(children[0], mod, fn, bb);
+    Value *rhs = lower_expr(children[1], mod, fn, bb);
 
     auto instr = std::make_unique<Instruction>(op, next_value_id++);
     instr->type = lhs->type;
@@ -469,13 +470,45 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
         },
         &child);
 
-    return lower_expr(child, fn, bb);
+    return lower_expr(child, mod, fn, bb);
   }
 
   case CXCursor_DeclRefExpr: {
     CXCursor decl = clang_getCursorReferenced(expr);
     return read_variable(decl, bb);
-    break;
+  }
+
+  case CXCursor_CallExpr: {
+    std::vector<CXCursor> children;
+
+    clang_visitChildren(
+        expr,
+        [](CXCursor child, CXCursor, CXClientData data) {
+          auto *children = static_cast<std::vector<CXCursor> *>(data);
+          children->push_back(child);
+          return CXChildVisit_Continue;
+        },
+        &children);
+
+    CXCursor callee_expr = children[0];
+    CXCursor callee_decl = clang_getCursorReferenced(callee_expr);
+    auto callee_name = cxstring_to_string(clang_getCursorSpelling(callee_decl));
+    Function *callee = mod->fn_map.at(callee_name);
+
+    auto call_instr =
+        std::make_unique<Instruction>(OpCode::Call, next_value_id++);
+    call_instr->type = callee->ret_type;
+    call_instr->payload = CallData{.callee = callee};
+
+    for (auto arg = children.begin() + 1; arg != children.end(); arg++) {
+      auto *arg_val = lower_expr(*arg, mod, fn, bb);
+      call_instr->operands.push_back(arg_val);
+    }
+
+    auto *result = call_instr.get();
+    bb->instrs.push_back(std::move(call_instr));
+
+    return result;
   }
 
   default:
@@ -483,13 +516,14 @@ Value *LoweringPass::lower_expr(CXCursor expr, Function *fn, BasicBlock *&bb) {
   }
 }
 
-BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
+BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
                                      BasicBlock *bb) {
   struct StmtCtx {
     LoweringPass *self;
+    Module *mod;
     Function *fn;
     BasicBlock *bb;
-  } ctx{this, fn, bb};
+  } ctx{this, mod, fn, bb};
 
   switch (clang_getCursorKind(stmt)) {
   case CXCursor_CompoundStmt:
@@ -497,7 +531,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
         stmt,
         [](CXCursor child, CXCursor, CXClientData data) {
           auto *ctx = static_cast<StmtCtx *>(data);
-          ctx->bb = ctx->self->lower_stmt(child, ctx->fn, ctx->bb);
+          ctx->bb = ctx->self->lower_stmt(child, ctx->mod, ctx->fn, ctx->bb);
           return CXChildVisit_Continue;
         },
         &ctx);
@@ -508,7 +542,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
         stmt,
         [](CXCursor child, CXCursor, CXClientData data) {
           auto *ctx = static_cast<StmtCtx *>(data);
-          ctx->bb = ctx->self->lower_stmt(child, ctx->fn, ctx->bb);
+          ctx->bb = ctx->self->lower_stmt(child, ctx->mod, ctx->fn, ctx->bb);
           return CXChildVisit_Continue;
         },
         &ctx);
@@ -526,14 +560,14 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
         },
         &init);
 
-    Value *init_val = lower_expr(init, fn, bb);
+    Value *init_val = lower_expr(init, mod, fn, bb);
 
     write_variable(stmt, bb, init_val);
     return bb;
   }
 
   case CXCursor_BinaryOperator:
-    lower_expr(stmt, fn, bb);
+    lower_expr(stmt, mod, fn, bb);
     return bb;
 
   case CXCursor_IfStmt: {
@@ -551,7 +585,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     bool has_else = children.size() > 2;
     CXCursor else_cursor = has_else ? children[2] : clang_getNullCursor();
 
-    Value *cond_val = lower_expr(cond_cursor, fn, bb);
+    Value *cond_val = lower_expr(cond_cursor, mod, fn, bb);
 
     auto then_bb = create_block(fn);
     auto else_bb = has_else ? create_block(fn) : nullptr;
@@ -569,7 +603,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
       seal_block(else_bb, {bb});
     }
 
-    BasicBlock *then_exit = lower_stmt(then_cursor, fn, then_bb);
+    BasicBlock *then_exit = lower_stmt(then_cursor, mod, fn, then_bb);
 
     if (then_exit->instrs.empty() ||
         !is_terminator(then_exit->instrs.back()->op)) {
@@ -582,7 +616,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     BasicBlock *else_exit = nullptr;
 
     if (has_else) {
-      else_exit = lower_stmt(else_cursor, fn, else_bb);
+      else_exit = lower_stmt(else_cursor, mod, fn, else_bb);
       if (else_exit->instrs.empty() ||
           !is_terminator(else_exit->instrs.back()->op)) {
         auto jmpelse = std::make_unique<Instruction>(OpCode::Jmp);
@@ -622,7 +656,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
 
     loop_stack.push_back({header_bb, exit_bb});
 
-    Value *cond_val = lower_expr(cond_cursor, fn, header_bb);
+    Value *cond_val = lower_expr(cond_cursor, mod, fn, header_bb);
 
     auto br = std::make_unique<Instruction>(OpCode::CondBr);
     br->payload = CondBrData{
@@ -631,7 +665,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
 
     seal_block(body_bb, {header_bb});
 
-    auto body_exit = lower_stmt(body_cursor, fn, body_bb);
+    auto body_exit = lower_stmt(body_cursor, mod, fn, body_bb);
 
     if (body_exit->instrs.empty() ||
         !is_terminator(body_exit->instrs.back()->op)) {
@@ -663,7 +697,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     auto incr_cursor = children[2];
     auto body_cursor = children[3];
 
-    lower_stmt(init_cursor, fn, bb);
+    lower_stmt(init_cursor, mod, fn, bb);
 
     auto header_bb = create_block(fn);
     auto body_bb = create_block(fn);
@@ -677,7 +711,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     loop_stack.push_back({incr_bb, exit_bb});
 
     seal_block(body_bb, {header_bb});
-    BasicBlock *body_exit = lower_stmt(body_cursor, fn, body_bb);
+    BasicBlock *body_exit = lower_stmt(body_cursor, mod, fn, body_bb);
 
     if (body_exit && (body_exit->instrs.empty() ||
                       !is_terminator(body_exit->instrs.back()->op))) {
@@ -687,7 +721,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     }
 
     seal_block(incr_bb, {body_exit});
-    BasicBlock *incr_exit = lower_stmt(incr_cursor, fn, incr_bb);
+    BasicBlock *incr_exit = lower_stmt(incr_cursor, mod, fn, incr_bb);
 
     if (incr_exit && (incr_exit->instrs.empty() ||
                       !is_terminator(incr_exit->instrs.back()->op))) {
@@ -698,7 +732,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
 
     seal_block(header_bb, {bb, incr_exit});
 
-    Value *cond_val = lower_expr(cond_cursor, fn, header_bb);
+    Value *cond_val = lower_expr(cond_cursor, mod, fn, header_bb);
 
     auto br = std::make_unique<Instruction>(OpCode::CondBr);
     br->payload = CondBrData{
@@ -755,7 +789,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     auto ret = std::make_unique<Instruction>(OpCode::Ret);
 
     if (found) {
-      Value *ret_val = lower_expr(expr, fn, bb);
+      Value *ret_val = lower_expr(expr, mod, fn, bb);
       ret->operands.push_back(ret_val);
     }
 
@@ -764,20 +798,32 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Function *fn,
     return bb;
   }
 
+  case CXCursor_CallExpr:
+    lower_expr(stmt, mod, fn, bb);
+    return bb;
+
   default:
     throw_error("unsupported statement");
   }
 }
 
-void LoweringPass::lower_function(CXCursor fn_decl, Module *mod) {
+Function *LoweringPass::declare_function(CXCursor fn_decl, Module *mod) {
   auto fn = std::make_unique<Function>();
   auto *fn_ptr = fn.get();
-
-  current_fn = fn_ptr;
 
   fn_ptr->name = cxstring_to_string(clang_getCursorSpelling(fn_decl));
   fn_ptr->ret_type =
       lower_type(clang_getResultType(clang_getCursorType(fn_decl)));
+
+  mod->fn_map[fn_ptr->name] = fn_ptr;
+  mod->funcs.push_back(std::move(fn));
+
+  return fn_ptr;
+}
+
+void LoweringPass::lower_function_body(CXCursor fn_decl, Module *mod,
+                                       Function *fn) {
+  current_fn = fn;
 
   CXCursor body_cursor = clang_getNullCursor();
   std::vector<std::pair<CXCursor, Value *>> param_decls;
@@ -787,11 +833,11 @@ void LoweringPass::lower_function(CXCursor fn_decl, Module *mod) {
     Function *fn;
     CXCursor *body_out;
     std::vector<std::pair<CXCursor, Value *>> *param_decls;
-  } ctx{this, fn_ptr, &body_cursor, &param_decls};
+  } ctx{this, fn, &body_cursor, &param_decls};
 
   clang_visitChildren(
       fn_decl,
-      [](CXCursor cursor, CXCursor /*parent*/, CXClientData client_data) {
+      [](CXCursor cursor, CXCursor, CXClientData client_data) {
         auto *ctx = static_cast<Ctx *>(client_data);
 
         switch (clang_getCursorKind(cursor)) {
@@ -799,6 +845,7 @@ void LoweringPass::lower_function(CXCursor fn_decl, Module *mod) {
           auto param = std::make_unique<Value>();
           param->id = ctx->self->next_value_id++;
           param->type = ctx->self->lower_type(clang_getCursorType(cursor));
+
           Value *param_ptr = param.get();
           ctx->fn->params.push_back(std::move(param));
           ctx->param_decls->push_back({cursor, param_ptr});
@@ -822,17 +869,26 @@ void LoweringPass::lower_function(CXCursor fn_decl, Module *mod) {
   entry_ptr->id = next_bb_id++;
   entry_ptr->sealed = true;
 
-  fn_ptr->blcks.push_back(std::move(entry));
+  fn->blcks.push_back(std::move(entry));
 
   for (auto &[param_cursor, param_val] : param_decls) {
     write_variable(param_cursor, entry_ptr, param_val);
   }
 
+  BasicBlock *exit_bb = entry_ptr;
+
   if (!clang_Cursor_isNull(body_cursor)) {
-    lower_stmt(body_cursor, fn_ptr, entry_ptr);
+    exit_bb = lower_stmt(body_cursor, mod, fn, entry_ptr);
   }
 
-  mod->funcs.push_back(std::move(fn));
+  bool terminated =
+      !exit_bb->instrs.empty() && is_terminator(exit_bb->instrs.back()->op);
+
+  if (!terminated && fn->ret_type->kind == TypeKind::Void) {
+    auto ret = std::make_unique<Instruction>(OpCode::Ret);
+    exit_bb->instrs.push_back(std::move(ret));
+  }
+
   current_fn = nullptr;
 }
 
@@ -846,12 +902,28 @@ Module LoweringPass::run() {
 
   clang_visitChildren(
       source.root,
-      [](CXCursor cursor, CXCursor /* parent */, CXClientData client_data) {
+      [](CXCursor cursor, CXCursor, CXClientData client_data) {
         auto *ctx = static_cast<VisitorCtx *>(client_data);
 
         if (clang_getCursorKind(cursor) == CXCursor_FunctionDecl &&
             clang_isCursorDefinition(cursor)) {
-          ctx->self->lower_function(cursor, ctx->mod);
+          ctx->self->declare_function(cursor, ctx->mod);
+        }
+
+        return CXChildVisit_Continue;
+      },
+      &ctx);
+
+  clang_visitChildren(
+      source.root,
+      [](CXCursor cursor, CXCursor, CXClientData client_data) {
+        auto *ctx = static_cast<VisitorCtx *>(client_data);
+
+        if (clang_getCursorKind(cursor) == CXCursor_FunctionDecl &&
+            clang_isCursorDefinition(cursor)) {
+          auto name = cxstring_to_string(clang_getCursorSpelling(cursor));
+          Function *fn = ctx->mod->fn_map.at(name);
+          ctx->self->lower_function_body(cursor, ctx->mod, fn);
         }
 
         return CXChildVisit_Continue;

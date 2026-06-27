@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -29,6 +30,7 @@ enum class OpCode {
 
   LNot,
 
+  Call,
   Ret,
 
   Jmp,
@@ -126,20 +128,26 @@ struct CondBrData {
   BasicBlock *false_target = nullptr;
 };
 
+// fwd decl
+struct Function;
+
+struct CallData {
+  Function *callee;
+};
+
 struct Instruction : Value {
   OpCode op;
   std::vector<Value *> operands;
 
   bool has_result;
 
-  std::variant<std::monostate, ConstData, PhiData, JmpData, CondBrData> payload;
+  std::variant<std::monostate, ConstData, CallData, JmpData, CondBrData,
+               PhiData>
+      payload;
 
   Instruction(OpCode op);
   Instruction(OpCode op, std::uint64_t id);
 };
-
-// fwd decl
-struct Function;
 
 struct BasicBlock {
   std::uint64_t id;
@@ -167,6 +175,9 @@ struct Function {
 
 struct Module {
   std::vector<std::unique_ptr<Function>> funcs;
+  std::unordered_map<std::string, Function *> fn_map;
+
+  Function *find_func(const std::string &name) const;
 };
 
 } // namespace fcc

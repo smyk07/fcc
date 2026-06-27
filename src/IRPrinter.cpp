@@ -43,6 +43,8 @@ constexpr const char *opcode_to_string(const OpCode op) {
   case OpCode::LNot:
     return "lnot";
 
+  case OpCode::Call:
+    return "call";
   case OpCode::Ret:
     return "ret";
 
@@ -124,6 +126,21 @@ void dump(fcc::Instruction &instr) {
   case OpCode::LNot:
     std::print(" %{}", instr.operands[0]->id);
     break;
+
+  case OpCode::Call: {
+    auto data = std::get<CallData>(instr.payload);
+    std::print(" {}(", data.callee->name);
+    if (!instr.operands.empty()) {
+      for (auto &ai : instr.operands) {
+        if (ai == instr.operands.back())
+          std::print("%{}", ai->id);
+        else
+          std::print("%{}, ", ai->id);
+      }
+    }
+    std::print(")", data.callee->name);
+    break;
+  }
 
   case OpCode::Ret:
     if (!instr.operands.empty())

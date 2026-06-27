@@ -13,6 +13,7 @@ namespace {
 
 bool is_critical(const Instruction &instr) {
   switch (instr.op) {
+  case OpCode::Call:
   case OpCode::Ret:
   case OpCode::CondBr:
   case OpCode::Jmp:
