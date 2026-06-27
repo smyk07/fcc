@@ -51,6 +51,7 @@ ret %17
 }
 fn call_void_then_return() -> i32 {
 bb_9:
+%22: void = call local_void()
 %23: i32 = const 5
 ret %23
 }
