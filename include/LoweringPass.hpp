@@ -58,16 +58,17 @@ private:
   static Type *lower_type(CXType cxtype);
 
   BasicBlock *create_block(Function *fn);
-  void seal_block(BasicBlock *bb, const std::vector<BasicBlock *> &preds);
+  void seal_block(Function *fn, BasicBlock *bb,
+                  const std::vector<BasicBlock *> &preds);
 
   void write_variable(CXCursor var, BasicBlock *bb, Value *val);
-  Value *read_variable(CXCursor var, BasicBlock *bb);
-  Value *read_variable_recursive(CXCursor var, BasicBlock *bb);
+  Value *read_variable(CXCursor var, Function *fn, BasicBlock *bb);
+  Value *read_variable_recursive(CXCursor var, Function *fn, BasicBlock *bb);
 
   Instruction *create_phi(CXCursor var, BasicBlock *bb);
-  Value *add_phi_operands(CXCursor var, Instruction *phi,
+  Value *add_phi_operands(CXCursor var, Function *fn, Instruction *phi,
                           const std::vector<BasicBlock *> &preds);
-  Value *try_remove_trivial_phi(Instruction *phi);
+  Value *try_remove_trivial_phi(Function *fn, Instruction *phi);
 
   Value *lower_expr(CXCursor expr, Module *mod, Function *fn, BasicBlock *&bb);
   BasicBlock *lower_stmt(CXCursor stmt, Module *mod, Function *fn,

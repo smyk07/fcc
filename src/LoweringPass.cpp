@@ -13,12 +13,6 @@
 
 namespace fcc {
 
-namespace {
-
-Function *current_fn = nullptr;
-
-} // namespace
-
 Type *TypeCtx::get(TypeKind kind) {
   auto it = primitives.find(kind);
   if (it != primitives.end())
@@ -143,7 +137,7 @@ BasicBlock *LoweringPass::create_block(Function *fn) {
   return ptr;
 }
 
-void LoweringPass::seal_block(BasicBlock *bb,
+void LoweringPass::seal_block(Function *fn, BasicBlock *bb,
                               const std::vector<BasicBlock *> &preds) {
   bb->sealed = true;
   bb->preds = preds;
@@ -151,11 +145,11 @@ void LoweringPass::seal_block(BasicBlock *bb,
   for (auto &[var, phi] : bb->incomplete_phis) {
     PhiData data;
     for (auto *pred : preds) {
-      Value *incoming = read_variable(var, pred);
+      Value *incoming = read_variable(var, fn, pred);
       data.incoming.push_back({pred, incoming});
     }
     phi->payload = std::move(data);
-    try_remove_trivial_phi(phi);
+    try_remove_trivial_phi(fn, phi);
   }
 
   bb->incomplete_phis.clear();
@@ -165,17 +159,18 @@ void LoweringPass::write_variable(CXCursor var, BasicBlock *bb, Value *val) {
   defs[bb][var] = val;
 }
 
-Value *LoweringPass::read_variable(CXCursor var, BasicBlock *bb) {
+Value *LoweringPass::read_variable(CXCursor var, Function *fn, BasicBlock *bb) {
   auto &bb_defs = defs[bb];
   auto it = bb_defs.find(var);
 
   if (it != bb_defs.end())
     return it->second;
 
-  return read_variable_recursive(var, bb);
+  return read_variable_recursive(var, fn, bb);
 }
 
-Value *LoweringPass::read_variable_recursive(CXCursor var, BasicBlock *bb) {
+Value *LoweringPass::read_variable_recursive(CXCursor var, Function *fn,
+                                             BasicBlock *bb) {
   if (!bb->sealed) {
     auto phi = create_phi(var, bb);
 
@@ -186,7 +181,7 @@ Value *LoweringPass::read_variable_recursive(CXCursor var, BasicBlock *bb) {
   }
 
   if (bb->preds.size() == 1) {
-    Value *val = read_variable(var, bb->preds[0]);
+    Value *val = read_variable(var, fn, bb->preds[0]);
     write_variable(var, bb, val);
     return val;
   }
@@ -194,24 +189,25 @@ Value *LoweringPass::read_variable_recursive(CXCursor var, BasicBlock *bb) {
   auto *phi = create_phi(var, bb);
   write_variable(var, bb, phi);
 
-  return add_phi_operands(var, phi, bb->preds);
+  return add_phi_operands(var, fn, phi, bb->preds);
 }
 
-Value *LoweringPass::add_phi_operands(CXCursor var, Instruction *phi,
+Value *LoweringPass::add_phi_operands(CXCursor var, Function *fn,
+                                      Instruction *phi,
                                       const std::vector<BasicBlock *> &preds) {
   PhiData data;
 
   for (auto *pred : preds) {
-    Value *incoming = read_variable(var, pred);
+    Value *incoming = read_variable(var, fn, pred);
     data.incoming.push_back({pred, incoming});
   }
 
   phi->payload = std::move(data);
 
-  return try_remove_trivial_phi(phi);
+  return try_remove_trivial_phi(fn, phi);
 }
 
-Value *LoweringPass::try_remove_trivial_phi(Instruction *phi) {
+Value *LoweringPass::try_remove_trivial_phi(Function *fn, Instruction *phi) {
   auto &data = std::get<PhiData>(phi->payload);
   Value *same = nullptr;
 
@@ -238,8 +234,8 @@ Value *LoweringPass::try_remove_trivial_phi(Instruction *phi) {
     }
   }
 
-  current_fn->replace_all_uses(phi, same);
-  current_fn->erase_instr(phi);
+  fn->replace_all_uses(phi, same);
+  fn->erase_instr(phi);
   return same;
 }
 
@@ -388,7 +384,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Module *mod, Function *fn,
       };
       bb->instrs.push_back(std::move(lhs_br));
 
-      seal_block(rhs_bb, {bb});
+      seal_block(fn, rhs_bb, {bb});
 
       Value *rhs = lower_expr(children[1], mod, fn, rhs_bb);
 
@@ -400,8 +396,8 @@ Value *LoweringPass::lower_expr(CXCursor expr, Module *mod, Function *fn,
       };
       rhs_bb->instrs.push_back(std::move(rhs_br));
 
-      seal_block(true_bb, {rhs_bb});
-      seal_block(false_bb, {bb, rhs_bb});
+      seal_block(fn, true_bb, {rhs_bb});
+      seal_block(fn, false_bb, {bb, rhs_bb});
 
       auto true_jmp = std::make_unique<Instruction>(OpCode::Jmp);
       true_jmp->payload = JmpData{.target = merge_bb};
@@ -411,7 +407,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Module *mod, Function *fn,
       false_jmp->payload = JmpData{.target = merge_bb};
       false_bb->instrs.push_back(std::move(false_jmp));
 
-      seal_block(merge_bb, {true_bb, false_bb});
+      seal_block(fn, merge_bb, {true_bb, false_bb});
 
       auto one = std::make_unique<Instruction>(OpCode::Const, next_value_id++);
       one->type = type_ctx.get(TypeKind::I32);
@@ -475,7 +471,7 @@ Value *LoweringPass::lower_expr(CXCursor expr, Module *mod, Function *fn,
 
   case CXCursor_DeclRefExpr: {
     CXCursor decl = clang_getCursorReferenced(expr);
-    return read_variable(decl, bb);
+    return read_variable(decl, fn, bb);
   }
 
   case CXCursor_CallExpr: {
@@ -598,9 +594,9 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
 
     bb->instrs.push_back(std::move(br));
 
-    seal_block(then_bb, {bb});
+    seal_block(fn, then_bb, {bb});
     if (has_else) {
-      seal_block(else_bb, {bb});
+      seal_block(fn, else_bb, {bb});
     }
 
     BasicBlock *then_exit = lower_stmt(then_cursor, mod, fn, then_bb);
@@ -628,7 +624,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
     std::vector<BasicBlock *> merge_preds = {then_exit};
     merge_preds.push_back(has_else ? else_exit : bb);
 
-    seal_block(merge_bb, merge_preds);
+    seal_block(fn, merge_bb, merge_preds);
     return merge_bb;
   }
 
@@ -663,7 +659,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
         .cond = cond_val, .true_target = body_bb, .false_target = exit_bb};
     header_bb->instrs.push_back(std::move(br));
 
-    seal_block(body_bb, {header_bb});
+    seal_block(fn, body_bb, {header_bb});
 
     auto body_exit = lower_stmt(body_cursor, mod, fn, body_bb);
 
@@ -674,8 +670,8 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
       body_exit->instrs.push_back(std::move(loop_jmp));
     }
 
-    seal_block(header_bb, {bb, body_exit});
-    seal_block(exit_bb, {header_bb});
+    seal_block(fn, header_bb, {bb, body_exit});
+    seal_block(fn, exit_bb, {header_bb});
 
     loop_stack.pop_back();
 
@@ -710,7 +706,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
 
     loop_stack.push_back({incr_bb, exit_bb});
 
-    seal_block(body_bb, {header_bb});
+    seal_block(fn, body_bb, {header_bb});
     BasicBlock *body_exit = lower_stmt(body_cursor, mod, fn, body_bb);
 
     if (body_exit && (body_exit->instrs.empty() ||
@@ -720,7 +716,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
       body_exit->instrs.push_back(std::move(jmp));
     }
 
-    seal_block(incr_bb, {body_exit});
+    seal_block(fn, incr_bb, {body_exit});
     BasicBlock *incr_exit = lower_stmt(incr_cursor, mod, fn, incr_bb);
 
     if (incr_exit && (incr_exit->instrs.empty() ||
@@ -730,7 +726,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
       incr_exit->instrs.push_back(std::move(jmp));
     }
 
-    seal_block(header_bb, {bb, incr_exit});
+    seal_block(fn, header_bb, {bb, incr_exit});
 
     Value *cond_val = lower_expr(cond_cursor, mod, fn, header_bb);
 
@@ -739,7 +735,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
         .cond = cond_val, .true_target = body_bb, .false_target = exit_bb};
     header_bb->instrs.push_back(std::move(br));
 
-    seal_block(exit_bb, {header_bb});
+    seal_block(fn, exit_bb, {header_bb});
 
     loop_stack.pop_back();
 
@@ -823,8 +819,6 @@ Function *LoweringPass::declare_function(CXCursor fn_decl, Module *mod) {
 
 void LoweringPass::lower_function_body(CXCursor fn_decl, Module *mod,
                                        Function *fn) {
-  current_fn = fn;
-
   CXCursor body_cursor = clang_getNullCursor();
   std::vector<std::pair<CXCursor, Value *>> param_decls;
 
@@ -888,8 +882,6 @@ void LoweringPass::lower_function_body(CXCursor fn_decl, Module *mod,
     auto ret = std::make_unique<Instruction>(OpCode::Ret);
     exit_bb->instrs.push_back(std::move(ret));
   }
-
-  current_fn = nullptr;
 }
 
 Module LoweringPass::run() {
