@@ -4,6 +4,11 @@ This is a learning project for me, for learning IR building and Optimization Pas
 
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
 
+## 28/06/2026
+
+- Improved the implementation of DBrE a bit, might not appear in commits cuz i ammended the same one.
+- Implemented DBE pass.
+
 ## 27/06/2026
 
 - lowered function calls today.

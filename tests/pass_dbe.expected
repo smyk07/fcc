@@ -1,0 +1,102 @@
+tests/pass_dbe.c:43:9: warning: use of logical '||' with constant operand [-Wconstant-logical-operand]
+fn simple_true() -> i32 {
+bb_0:
+jmp bb_1
+bb_1:
+%3: i32 = const 1
+ret %3
+}
+fn simple_false() -> i32 {
+bb_4:
+jmp bb_6
+bb_6:
+%9: i32 = const 0
+ret %9
+}
+fn nested_dead() -> i32 {
+bb_8:
+jmp bb_9
+bb_9:
+jmp bb_12
+bb_12:
+%15: i32 = const 10
+ret %15
+}
+fn logical_and_dead() -> i32 {
+bb_15:
+jmp bb_16
+bb_16:
+jmp bb_18
+bb_18:
+jmp bb_19
+bb_19:
+%21: i32 = const 0
+%22: i32 = phi [ bb_18, %21 ]
+condbr %22 bb_20 bb_21
+bb_20:
+%23: i32 = const 1
+ret %23
+bb_21:
+%24: i32 = const 0
+ret %24
+}
+fn logical_or_dead() -> i32 {
+bb_22:
+jmp bb_23
+bb_23:
+jmp bb_24
+bb_24:
+jmp bb_26
+bb_26:
+%27: i32 = const 1
+%29: i32 = phi [ bb_24, %27 ]
+condbr %29 bb_27 bb_28
+bb_27:
+%30: i32 = const 1
+ret %30
+bb_28:
+%31: i32 = const 0
+ret %31
+}
+fn while_never_runs() -> i32 {
+bb_29:
+jmp bb_30
+bb_30:
+jmp bb_31
+bb_31:
+%36: i32 = const 1
+ret %36
+}
+fn while_always_runs() -> i32 {
+bb_33:
+jmp bb_34
+bb_34:
+jmp bb_35
+bb_35:
+%42: i32 = const 7
+ret %42
+}
+fn chained_cfg() -> i32 {
+bb_37:
+jmp bb_38
+bb_38:
+%49: i32 = const 1
+ret %49
+}
+fn multiple_unreachable() -> i32 {
+bb_41:
+jmp bb_42
+bb_42:
+%54: i32 = const 1
+ret %54
+}
+fn phi_test(%56: i32) -> i32 {
+bb_44:
+jmp bb_45
+bb_45:
+%61: i32 = const 10
+jmp bb_47
+bb_47:
+%63: i32 = phi [ bb_45, %61 ]
+ret %63
+}

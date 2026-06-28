@@ -55,8 +55,10 @@ Requirements:
 
 ## Implemented Optimization Passes
 
-- Dead Definition Elimination
 - Constant Folding
+- Dead Branch Elimination
+- Dead Block Elimination
+- Dead Definition Elimination
 
 ## Currently Lowered C Features
 

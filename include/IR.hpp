@@ -176,8 +176,6 @@ struct Function {
 struct Module {
   std::vector<std::unique_ptr<Function>> funcs;
   std::unordered_map<std::string, Function *> fn_map;
-
-  Function *find_func(const std::string &name) const;
 };
 
 } // namespace fcc

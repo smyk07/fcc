@@ -127,9 +127,4 @@ void Function::erase_instr(Instruction *dead) {
   }
 }
 
-Function *Module::find_func(const std::string &name) const {
-  auto it = fn_map.find(name);
-  return it == fn_map.end() ? nullptr : it->second;
-}
-
 } // namespace fcc
