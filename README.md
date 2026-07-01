@@ -58,6 +58,7 @@ Requirements:
 - Constant Folding
 - Dead Branch Elimination
 - Dead Block Elimination
+- Constant Hoisting
 - Dead Definition Elimination
 
 ## Currently Lowered C Features
@@ -74,6 +75,14 @@ Requirements:
 - SSA variable reads / writes with phi insertion
 
 ### Expressions
+
+#### Assignment Operators
+
+- `+=`
+- `-=`
+- `*=`
+- `/=`
+- `%=`
 
 #### Binary arithmetic
 
