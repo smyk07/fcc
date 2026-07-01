@@ -42,10 +42,10 @@ public:
 
   Module run();
 
-private:
-  std::uint64_t next_bb_id = 0;
-  std::uint64_t next_value_id = 0;
+  static std::uint64_t next_bb_id;
+  static std::uint64_t next_value_id;
 
+private:
   static TypeCtx type_ctx;
 
   std::unordered_map<

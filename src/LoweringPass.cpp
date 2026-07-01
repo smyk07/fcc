@@ -114,6 +114,9 @@ Type *LoweringPass::lower_type(CXType cxtype) {
   }
 }
 
+std::uint64_t LoweringPass::next_bb_id = 0;
+std::uint64_t LoweringPass::next_value_id = 0;
+
 Instruction *LoweringPass::create_phi(CXCursor var, BasicBlock *bb) {
   auto phi = std::make_unique<Instruction>(OpCode::Phi, next_value_id++);
   phi->type = lower_type(clang_getCursorType(var));

@@ -2,6 +2,7 @@
 
 #include "passes/BaseFnPass.hpp"
 #include "passes/ConstFoldFnPass.hpp"
+#include "passes/ConstHoistingFnPass.hpp"
 #include "passes/DBEFnPass.hpp"
 #include "passes/DBrEFnPass.hpp"
 #include "passes/DDEFnPass.hpp"
@@ -50,13 +51,14 @@ private:
   const Module &mod;
 
   static std::vector<std::unique_ptr<BaseFnPass>> fn_passes;
-  static constexpr PassReg<BaseFnPass, 5> fn_pass_reg{{{
+  static constexpr PassReg<BaseFnPass, 6> fn_pass_reg{{{
       REGISTER_PASS("HelloWorld", HelloWorldFnPass),
 
       REGISTER_PASS("ConstFold", ConstFold),
-      REGISTER_PASS("DDE", DDEFnPass),
       REGISTER_PASS("DBrE", DBrEFnPass),
       REGISTER_PASS("DBE", DBEFnPass),
+      REGISTER_PASS("ConstHoisting", ConstHoistingFnPass),
+      REGISTER_PASS("DDE", DDEFnPass),
   }}};
 
 public:

@@ -4,6 +4,11 @@ This is a learning project for me, for learning IR building and Optimization Pas
 
 Hoping to keep daily Dev log like reports in this file. Days in decending order.
 
+## 01/07/2026
+
+- Lowered arithmetic assignment operators
+- implemented constant hoisting pass, simplifying this pass was also very fun.
+
 ## 28/06/2026
 
 - Improved the implementation of DBrE a bit, might not appear in commits cuz i ammended the same one.
