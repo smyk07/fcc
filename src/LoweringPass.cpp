@@ -248,8 +248,8 @@ Value *LoweringPass::lower_expr(CXCursor expr, Module *mod, Function *fn,
     instr->type = type_ctx.get(TypeKind::I32);
 
     auto literal = get_cursor_text(source.tu, expr);
-    auto value = std::stoull(literal, nullptr, 0);
-    instr->payload = ConstData{.bits = value};
+    auto bits = std::stoull(literal, nullptr, 0);
+    instr->payload = ConstData{.bits = bits};
 
     auto *result = instr.get();
     bb->instrs.push_back(std::move(instr));
@@ -454,6 +454,47 @@ Value *LoweringPass::lower_expr(CXCursor expr, Module *mod, Function *fn,
     return result;
   }
 
+  case CXCursor_CompoundAssignOperator: {
+    std::vector<CXCursor> children;
+    clang_visitChildren(
+        expr,
+        [](CXCursor child, CXCursor, CXClientData data) {
+          static_cast<std::vector<CXCursor> *>(data)->push_back(child);
+          return CXChildVisit_Continue;
+        },
+        &children);
+
+    CXCursor var = clang_getCursorReferenced(children[0]);
+
+    auto lhs = read_variable(var, fn, bb);
+    auto rhs = lower_expr(children[1], mod, fn, bb);
+    OpCode op;
+
+    auto expr_text = get_cursor_text(source.tu, expr);
+    if (expr_text.contains("+="))
+      op = OpCode::Add;
+    else if (expr_text.contains("-="))
+      op = OpCode::Sub;
+    else if (expr_text.contains("*="))
+      op = OpCode::Mul;
+    else if (expr_text.contains("/="))
+      op = OpCode::Div;
+    else if (expr_text.contains("%="))
+      op = OpCode::Mod;
+    else
+      throw_error("unsupported assignment operator");
+
+    auto instr = std::make_unique<Instruction>(op, next_value_id++);
+    instr->type = lhs->type;
+    instr->operands.push_back(lhs);
+    instr->operands.push_back(rhs);
+
+    Value *result = instr.get();
+    bb->instrs.push_back(std::move(instr));
+    write_variable(var, bb, result);
+    return result;
+  }
+
   case CXCursor_UnexposedExpr:
   case CXCursor_ParenExpr: {
     CXCursor child = clang_getNullCursor();
@@ -562,6 +603,7 @@ BasicBlock *LoweringPass::lower_stmt(CXCursor stmt, Module *mod, Function *fn,
     return bb;
   }
 
+  case CXCursor_CompoundAssignOperator:
   case CXCursor_BinaryOperator:
     lower_expr(stmt, mod, fn, bb);
     return bb;
