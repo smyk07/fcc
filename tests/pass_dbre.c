@@ -1,4 +1,4 @@
-// ConstantFolding DBrE DDE
+// ConstFold DBrE DDE
 
 int always_true() {
   if (1) {

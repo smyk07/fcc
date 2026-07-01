@@ -1,7 +1,7 @@
 #pragma once
 
 #include "passes/BaseFnPass.hpp"
-#include "passes/ConstantFoldingFnPass.hpp"
+#include "passes/ConstFoldFnPass.hpp"
 #include "passes/DBEFnPass.hpp"
 #include "passes/DBrEFnPass.hpp"
 #include "passes/DDEFnPass.hpp"
@@ -53,7 +53,7 @@ private:
   static constexpr PassReg<BaseFnPass, 5> fn_pass_reg{{{
       REGISTER_PASS("HelloWorld", HelloWorldFnPass),
 
-      REGISTER_PASS("ConstantFolding", ConstantFoldingFnPass),
+      REGISTER_PASS("ConstFold", ConstFold),
       REGISTER_PASS("DDE", DDEFnPass),
       REGISTER_PASS("DBrE", DBrEFnPass),
       REGISTER_PASS("DBE", DBEFnPass),

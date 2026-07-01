@@ -1,4 +1,4 @@
-// ConstantFolding DDE
+// ConstFold DDE
 
 void empty_void() {}
 

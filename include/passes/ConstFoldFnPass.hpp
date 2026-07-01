@@ -10,7 +10,7 @@ namespace fcc {
  * Constant Folding
  */
 
-struct ConstantFoldingFnPass : BaseFnPass {
+struct ConstFold : BaseFnPass {
   bool run(Function &) override;
 };
 

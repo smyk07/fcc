@@ -1,4 +1,4 @@
-// ConstantFolding DDE
+// ConstFold DDE
 
 int basic_fold() {
   int x = 6 + 7;

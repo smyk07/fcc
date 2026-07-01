@@ -1,4 +1,4 @@
-// ConstantFolding DBrE DBE DDE
+// ConstFold DBrE DBE DDE
 
 int simple_true() {
   int x = 1;

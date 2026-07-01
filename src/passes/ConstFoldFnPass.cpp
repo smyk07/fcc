@@ -12,7 +12,7 @@
  * %0: i32 = const 13
  */
 
-#include "passes/ConstantFoldingFnPass.hpp"
+#include "passes/ConstFoldFnPass.hpp"
 
 #include "IR.hpp"
 
@@ -213,7 +213,7 @@ bool try_fold(Instruction *instr, Function *fn) {
 
 } // namespace
 
-bool ConstantFoldingFnPass::run(Function &fn) {
+bool ConstFold::run(Function &fn) {
   bool changed = false;
   bool effective_iteration;
 
