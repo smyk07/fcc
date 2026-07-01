@@ -1,3 +1,5 @@
+// ConstFold DBrE DBE ConstHoisting DDE
+
 int basic(int x) {
   int a = x + 5;
   int b = a - 5;

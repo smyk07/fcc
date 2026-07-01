@@ -26,17 +26,18 @@ ret %19
 }
 fn branches(%20: i32) -> i32 {
 bb_2:
+%91: i32 = const 42
 condbr %20 bb_3 bb_4
 bb_3:
-%21: i32 = const 42
-ret %21
+ret %91
 bb_4:
 %22: i32 = const 42
 ret %22
-bb_5:
 }
 fn loop(%23: i32) -> i32 {
 bb_6:
+%93: i32 = const 1
+%92: i32 = const 7
 %24: i32 = const 0
 jmp bb_7
 bb_7:
@@ -46,10 +47,8 @@ bb_7:
 %27: i32 = gt %25 %26
 condbr %27 bb_8 bb_9
 bb_8:
-%29: i32 = const 7
-%30: i32 = add %28 %29
-%31: i32 = const 1
-%32: i32 = sub %25 %31
+%30: i32 = add %28 %92
+%32: i32 = sub %25 %93
 jmp bb_7
 bb_9:
 %33: i32 = const 7
@@ -58,37 +57,33 @@ ret %34
 }
 fn at_entry(%35: i32) -> i32 {
 bb_10:
-%36: i32 = const 4
+%94: i32 = const 8
 condbr %35 bb_11 bb_12
 bb_11:
-%37: i32 = const 4
-%38: i32 = add %36 %37
-ret %38
+ret %94
 bb_12:
 %39: i32 = const 4
 ret %39
 }
 fn nested(%40: i32, %41: i32) -> i32 {
 bb_13:
+%97: i32 = const 11
 condbr %40 bb_14 bb_15
 bb_14:
 condbr %41 bb_16 bb_17
 bb_15:
-%46: i32 = const 9
-%47: i32 = const 2
-%48: i32 = add %46 %47
-ret %48
+ret %97
 bb_16:
 %42: i32 = const 9
 ret %42
 bb_17:
-%43: i32 = const 9
-%44: i32 = const 2
-%45: i32 = add %43 %44
+%45: i32 = const 11
 ret %45
 }
 fn logical(%49: i32, %50: i32) -> i32 {
 bb_18:
+%99: i32 = const 0
+%98: i32 = const 1
 condbr %49 bb_19 bb_21
 bb_19:
 condbr %50 bb_20 bb_21
@@ -97,13 +92,13 @@ jmp bb_22
 bb_21:
 jmp bb_22
 bb_22:
-%51: i32 = const 1
-%52: i32 = const 0
-%53: i32 = phi [ bb_20, %51 ], [ bb_21, %52 ]
+%53: i32 = phi [ bb_20, %98 ], [ bb_21, %99 ]
 ret %53
 }
 fn logical2(%54: i32, %55: i32) -> i32 {
 bb_23:
+%101: i32 = const 0
+%100: i32 = const 1
 condbr %54 bb_25 bb_24
 bb_24:
 condbr %55 bb_25 bb_26
@@ -112,9 +107,7 @@ jmp bb_27
 bb_26:
 jmp bb_27
 bb_27:
-%56: i32 = const 1
-%57: i32 = const 0
-%58: i32 = phi [ bb_25, %56 ], [ bb_26, %57 ]
+%58: i32 = phi [ bb_25, %100 ], [ bb_26, %101 ]
 ret %58
 }
 fn fact(%59: i32) -> i32 {
@@ -140,6 +133,8 @@ ret %70
 }
 fn evil_type_shit(%71: i32, %72: i32) -> i32 {
 bb_32:
+%103: i32 = const 2
+%102: i32 = const 0
 %73: i32 = const 1
 %74: i32 = const 1
 condbr %71 bb_33 bb_35
@@ -151,20 +146,16 @@ bb_35:
 jmp bb_36
 bb_36:
 %75: i32 = const 1
-%76: i32 = const 0
-%77: i32 = phi [ bb_34, %75 ], [ bb_35, %76 ]
+%77: i32 = phi [ bb_34, %75 ], [ bb_35, %102 ]
 condbr %77 bb_37 bb_38
 bb_37:
-%80: i32 = const 1
-%81: i32 = add %73 %80
 jmp bb_39
 bb_38:
-%84: i32 = const 1
-%85: i32 = add %74 %84
+%85: i32 = const 2
 jmp bb_39
 bb_39:
 %87: i32 = phi [ bb_37, %74 ], [ bb_38, %85 ]
-%86: i32 = phi [ bb_37, %81 ], [ bb_38, %73 ]
+%86: i32 = phi [ bb_37, %103 ], [ bb_38, %73 ]
 %88: i32 = add %86 %87
 %89: i32 = const 1
 %90: i32 = add %88 %89
